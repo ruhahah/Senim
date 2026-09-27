@@ -1,4 +1,4 @@
-const DEFAULT_SERVER = "http://127.0.0.1:8000";
+const DEFAULT_SERVER = "https://senim-616q.onrender.com";
 const $ = (id) => document.getElementById(id);
 
 const LOCAL = /^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i;

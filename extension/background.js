@@ -1,5 +1,5 @@
 // Senim: пункт «Проверить в Senim» в меню правой кнопки для выделенного текста.
-const DEFAULT_SERVER = "http://127.0.0.1:8000";
+const DEFAULT_SERVER = "https://senim-616q.onrender.com";
 const MAX_CHARS = 12000;
 const LOCAL = /^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i;
 
