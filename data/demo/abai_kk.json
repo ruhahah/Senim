@@ -1,0 +1,380 @@
+{
+  "_note": "Запись реального прогона (openai:gpt-6-luna → gemini:gemini-3.5-flash-lite → groq:openai/gpt-oss-120b)",
+  "text": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында дүниеге келген. Ол қазақ жазба әдебиетінің негізін салушы болып саналады. Абай 1920 жылы Алматыда қайтыс болды. Оның ең танымал шығармасы — «Қара сөздер». Абай Пушкин мен Лермонтовтың шығармаларын қазақ тіліне аударған. Менің ойымша, Абай — барлық заманның ең ұлы ақыны.\nДереккөз: Smith, J. (2019). «Abai and the Enlightenment of the Kazakh Steppe». Journal of Central Asian Literature, 12(3), 45–67. doi:10.99999/jcal.2019.0312",
+  "lang": "kk",
+  "claims": [
+    {
+      "id": 1,
+      "text": "Абай Құнанбайұлы 1845 жылы дүниеге келген.",
+      "span": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында дүниеге келген.",
+      "type": "date",
+      "importance": 3,
+      "search_queries": [
+        "Абай Құнанбайұлы туған жылы",
+        "Abai Qunanbaiuly birth year",
+        "год рождения Абая Кунанбаева"
+      ],
+      "sentence_index": 0
+    },
+    {
+      "id": 2,
+      "text": "Абай Құнанбайұлы Шыңғыстау баурайында дүниеге келген.",
+      "span": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында дүниеге келген.",
+      "type": "fact",
+      "importance": 3,
+      "search_queries": [
+        "Абай Құнанбайұлы туған жері",
+        "Abai Qunanbaiuly birthplace",
+        "место рождения Абая Кунанбаева"
+      ],
+      "sentence_index": 0
+    },
+    {
+      "id": 3,
+      "text": "Абай қазақ жазба әдебиетінің негізін салушы болып саналады.",
+      "span": "Ол қазақ жазба әдебиетінің негізін салушы болып саналады.",
+      "type": "fact",
+      "importance": 3,
+      "search_queries": [
+        "Абай қазақ жазба әдебиетінің негізін салушы",
+        "Abai founder of Kazakh written literature",
+        "Абай основатель казахской письменной литературы"
+      ],
+      "sentence_index": 1
+    },
+    {
+      "id": 4,
+      "text": "Абай 1920 жылы қайтыс болды.",
+      "span": "Абай 1920 жылы Алматыда қайтыс болды.",
+      "type": "date",
+      "importance": 3,
+      "search_queries": [
+        "Абай қайтыс болған жылы",
+        "Abai year of death",
+        "год смерти Абая"
+      ],
+      "sentence_index": 2
+    },
+    {
+      "id": 5,
+      "text": "Абай Алматыда қайтыс болды.",
+      "span": "Абай 1920 жылы Алматыда қайтыс болды.",
+      "type": "fact",
+      "importance": 2,
+      "search_queries": [
+        "Абай қайтыс болған жері",
+        "Abai place of death",
+        "место смерти Абая"
+      ],
+      "sentence_index": 2
+    },
+    {
+      "id": 6,
+      "text": "Абайдың ең танымал шығармасы — «Қара сөздер».",
+      "span": "Оның ең танымал шығармасы — «Қара сөздер».",
+      "type": "fact",
+      "importance": 2,
+      "search_queries": [
+        "Абайдың ең танымал шығармасы Қара сөздер",
+        "Abai most famous work Words of Edification",
+        "самое известное произведение Абая Қара сөздер"
+      ],
+      "sentence_index": 3
+    },
+    {
+      "id": 7,
+      "text": "Абай Пушкиннің шығармаларын қазақ тіліне аударған.",
+      "span": "Абай Пушкин мен Лермонтовтың шығармаларын қазақ тіліне аударған.",
+      "type": "fact",
+      "importance": 2,
+      "search_queries": [
+        "Абай Пушкин шығармаларын қазақ тіліне аударған",
+        "Abai translated Pushkin into Kazakh",
+        "Абай переводил Пушкина на казахский"
+      ],
+      "sentence_index": 4
+    },
+    {
+      "id": 8,
+      "text": "Абай Лермонтовтың шығармаларын қазақ тіліне аударған.",
+      "span": "Абай Пушкин мен Лермонтовтың шығармаларын қазақ тіліне аударған.",
+      "type": "fact",
+      "importance": 2,
+      "search_queries": [
+        "Абай Лермонтов шығармаларын қазақ тіліне аударған",
+        "Abai translated Lermontov into Kazakh",
+        "Абай переводил Лермонтова на казахский"
+      ],
+      "sentence_index": 4
+    },
+    {
+      "id": 9,
+      "text": "Абай — барлық заманның ең ұлы ақыны.",
+      "span": "Менің ойымша, Абай — барлық заманның ең ұлы ақыны.",
+      "type": "opinion",
+      "importance": 2,
+      "search_queries": [
+        "Абай барлық заманның ең ұлы ақыны пікір",
+        "Abai greatest poet of all time opinion",
+        "Абай величайший поэт всех времен мнение"
+      ],
+      "sentence_index": 5
+    },
+    {
+      "id": 10,
+      "text": "Мәтінде Smith, J. авторының 2019 жылы «Journal of Central Asian Literature» журналының 12-томының 3-нөмірінде 45–67-беттерде жарияланған «Abai and the Enlightenment of the Kazakh Steppe» мақаласы doi:10.99999/jcal.2019.0312 сілтемесімен берілген.",
+      "span": "Smith, J. (2019). «Abai and the Enlightenment of the Kazakh Steppe». Journal of Central Asian Literature, 12(3), 45–67. doi:10.99999/jcal.2019.0312",
+      "type": "citation",
+      "importance": 3,
+      "search_queries": [
+        "Абай туралы Smith 2019 Journal of Central Asian Literature",
+        "\"Abai and the Enlightenment of the Kazakh Steppe\"",
+        "статья Smith 2019 об Абае Journal of Central Asian Literature"
+      ],
+      "sentence_index": 6
+    }
+  ],
+  "results": [
+    {
+      "claim_id": 1,
+      "status": "supported",
+      "raw_verdict": "SUPPORTED",
+      "error_type": "none",
+      "quote": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында туған.",
+      "quote_verified": true,
+      "evidence": {
+        "id": 1,
+        "source": "senim_kb:kk",
+        "title": "Абай Құнанбайұлы",
+        "url": "senim-kb://abai-kk",
+        "text": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында туған. Абай 1904 жылы қайтыс болды. Ол — ақын, ағартушы, қазақ жазба әдебиетінің негізін салушы. Абай «Қара сөздер» деген атпен белгілі қырық бес ғақлия сөздің авторы. Ол Пушкин, Лермонтов, Крылов шығармаларын қазақ тіліне аударған."
+      },
+      "explanation": "Дәлелдерде Абайдың 1845 жылы дүниеге келгені тікелей көрсетілген. Сондықтан бұл мәліметке сенуге болады.",
+      "correction": "",
+      "how_to_check": "Дәлелдегі сөйлемді Абай Құнанбайұлы туралы кітапхана немесе энциклопедия дерегімен салыстыр.",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    },
+    {
+      "claim_id": 2,
+      "status": "supported",
+      "raw_verdict": "SUPPORTED",
+      "error_type": "none",
+      "quote": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында туған.",
+      "quote_verified": true,
+      "evidence": {
+        "id": 1,
+        "source": "senim_kb:kk",
+        "title": "Абай Құнанбайұлы",
+        "url": "senim-kb://abai-kk",
+        "text": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында туған. Абай 1904 жылы қайтыс болды. Ол — ақын, ағартушы, қазақ жазба әдебиетінің негізін салушы. Абай «Қара сөздер» деген атпен белгілі қырық бес ғақлия сөздің авторы. Ол Пушкин, Лермонтов, Крылов шығармаларын қазақ тіліне аударған."
+      },
+      "explanation": "Дәлелдемеде Абайдың Шыңғыстау баурайында туғаны тікелей айтылған. Сондықтан тұжырымды қолдауға болады.",
+      "correction": "",
+      "how_to_check": "1-дәлелдегі Абай туралы мәтінді оқып, туған жері көрсетілген сөйлемді тексер.",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    },
+    {
+      "claim_id": 3,
+      "status": "supported",
+      "raw_verdict": "SUPPORTED",
+      "error_type": "none",
+      "quote": "Ол — ақын, ағартушы, қазақ жазба әдебиетінің негізін салушы.",
+      "quote_verified": true,
+      "evidence": {
+        "id": 1,
+        "source": "senim_kb:kk",
+        "title": "Абай Құнанбайұлы",
+        "url": "senim-kb://abai-kk",
+        "text": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында туған. Абай 1904 жылы қайтыс болды. Ол — ақын, ағартушы, қазақ жазба әдебиетінің негізін салушы. Абай «Қара сөздер» деген атпен белгілі қырық бес ғақлия сөздің авторы. Ол Пушкин, Лермонтов, Крылов шығармаларын қазақ тіліне аударған."
+      },
+      "explanation": "Дәлел 1 Абайды қазақ жазба әдебиетінің негізін салушы деп нақты атайды. Сондықтан тұжырымды осы дерек растайды.",
+      "correction": "",
+      "how_to_check": "Дереккөздегі Абай туралы мақаланы ашып, оның ақын туралы сипаттамасын оқы.",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    },
+    {
+      "claim_id": 4,
+      "status": "contradicted",
+      "raw_verdict": "CONTRADICTED",
+      "error_type": "wrong_date",
+      "quote": "Абай 1904 жылы қайтыс болды.",
+      "quote_verified": true,
+      "evidence": {
+        "id": 4,
+        "source": "senim_kb:kk",
+        "title": "Абай Құнанбайұлы",
+        "url": "senim-kb://abai-kk",
+        "text": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында туған. Абай 1904 жылы қайтыс болды. Ол — ақын, ағартушы, қазақ жазба әдебиетінің негізін салушы. Абай «Қара сөздер» деген атпен белгілі қырық бес ғақлия сөздің авторы. Ол Пушкин, Лермонтов, Крылов шығармаларын қазақ тіліне аударған."
+      },
+      "explanation": "Дәлел бойынша Абай 1904 жылы қайтыс болған, сондықтан 1920 жыл деген дата дұрыс емес. Бұл тұжырымға сенуге болмайды.",
+      "correction": "Абай 1904 жылы қайтыс болды.",
+      "how_to_check": "Абай туралы сенімді өмірбаян деректерін ашып, қайтыс болған жылын салыстыр.",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    },
+    {
+      "claim_id": 5,
+      "status": "unverifiable",
+      "raw_verdict": "NOT_ENOUGH_EVIDENCE",
+      "error_type": "no_evidence",
+      "quote": "",
+      "quote_verified": false,
+      "evidence": null,
+      "explanation": "Дәлелдерде Абайдың 1904 жылы қайтыс болғаны және Жидебайда жерленгені айтылған, бірақ қай қалада қайтыс болғаны көрсетілмеген. Сондықтан Алматыда қайтыс болды деп растауға да, теріске шығаруға да дәлел жоқ.",
+      "correction": "",
+      "how_to_check": "Абайдың өмірбаянынан оның қайтыс болған жері нақты жазылған сенімді дереккөзді ізде.",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    },
+    {
+      "claim_id": 6,
+      "status": "disputed",
+      "raw_verdict": "PARTIAL",
+      "error_type": "no_evidence",
+      "quote": "Он автор «Слов назидания» («Қара сөздер»).",
+      "quote_verified": true,
+      "evidence": {
+        "id": 1,
+        "source": "senim_kb:ru",
+        "title": "Абай Кунанбаев",
+        "url": "senim-kb://abai-ru",
+        "text": "Абай Кунанбаев (Абай Құнанбайұлы) родился в 1845 году в урочище Чингистау и умер в 1904 году. Абай — казахский поэт, просветитель, основоположник казахской письменной литературы. Он автор «Слов назидания» («Қара сөздер»). Абай переводил на казахский язык произведения Пушкина, Лермонтова и Крылова."
+      },
+      "explanation": "Дәлел Абайдың «Қара сөздердің» авторы екенін растайды. Бірақ оның ең танымал шығармасы екенін айтпайды.",
+      "correction": "Дәлел бойынша Абай — «Қара сөздердің» авторы; оның ең танымал шығарма екені анықталмаған.",
+      "how_to_check": "Абайдың шығармалары туралы сенімді дереккөздерден қай туындысы ең танымал деп көрсетілгенін салыстыр.",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    },
+    {
+      "claim_id": 7,
+      "status": "supported",
+      "raw_verdict": "SUPPORTED",
+      "error_type": "none",
+      "quote": "Ол Пушкин, Лермонтов, Крылов шығармаларын қазақ тіліне аударған.",
+      "quote_verified": true,
+      "evidence": {
+        "id": 1,
+        "source": "senim_kb:kk",
+        "title": "Абай Құнанбайұлы",
+        "url": "senim-kb://abai-kk",
+        "text": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында туған. Абай 1904 жылы қайтыс болды. Ол — ақын, ағартушы, қазақ жазба әдебиетінің негізін салушы. Абай «Қара сөздер» деген атпен белгілі қырық бес ғақлия сөздің авторы. Ол Пушкин, Лермонтов, Крылов шығармаларын қазақ тіліне аударған."
+      },
+      "explanation": "Деректе Абайдың Пушкин шығармаларын қазақ тіліне аударғаны тікелей айтылған. Басқа деректе оның «Евгений Онегиннен» үзінділерді аударғаны нақтыланады.",
+      "correction": "",
+      "how_to_check": "Деректегі Абай туралы бөлімнен «Пушкин» және «аударған» деген сөздерді іздеп көр.",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    },
+    {
+      "claim_id": 8,
+      "status": "supported",
+      "raw_verdict": "SUPPORTED",
+      "error_type": "none",
+      "quote": "Ол Пушкин, Лермонтов, Крылов шығармаларын қазақ тіліне аударған.",
+      "quote_verified": true,
+      "evidence": {
+        "id": 1,
+        "source": "senim_kb:kk",
+        "title": "Абай Құнанбайұлы",
+        "url": "senim-kb://abai-kk",
+        "text": "Абай Құнанбайұлы 1845 жылы Шыңғыстау баурайында туған. Абай 1904 жылы қайтыс болды. Ол — ақын, ағартушы, қазақ жазба әдебиетінің негізін салушы. Абай «Қара сөздер» деген атпен белгілі қырық бес ғақлия сөздің авторы. Ол Пушкин, Лермонтов, Крылов шығармаларын қазақ тіліне аударған."
+      },
+      "explanation": "Дәлелдеуде Абайдың Лермонтов шығармаларын қазақ тіліне аударғаны анық айтылған. Сондықтан бұл тұжырымға сенуге болады.",
+      "correction": "",
+      "how_to_check": "Абай туралы сенімді дереккөзден оның аударған ақындары туралы бөлімді қара.",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    },
+    {
+      "claim_id": 9,
+      "status": "unverifiable",
+      "raw_verdict": null,
+      "error_type": "none",
+      "quote": "",
+      "quote_verified": false,
+      "evidence": null,
+      "explanation": "Бұл — пікір немесе баға. Оны фактілермен дәлелдеу не жоққа шығару мүмкін емес.",
+      "correction": "",
+      "how_to_check": "Кемінде екі сенімді дереккөзден іздеңіз: оқулық, энциклопедия немесе ресми сайт.",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    },
+    {
+      "claim_id": 10,
+      "status": "contradicted",
+      "raw_verdict": null,
+      "error_type": "fabricated_source",
+      "quote": "",
+      "quote_verified": false,
+      "evidence": null,
+      "explanation": "Мұндай DOI жоқ немесе ол мүлде басқа жұмысқа тиесілі — дереккөз ойдан шығарылған болуы әбден мүмкін.",
+      "correction": "",
+      "how_to_check": "",
+      "nli_label": null,
+      "nli_agrees": null,
+      "flags": [],
+      "rejected_quote": ""
+    }
+  ],
+  "citations": [
+    {
+      "citation": {
+        "raw": "Smith, J. (2019). «Abai and the Enlightenment of the Kazakh Steppe». Journal of Central Asian Literature, 12(3), 45–67. doi:10.99999/jcal.2019.0312",
+        "title": "Abai and the Enlightenment of the Kazakh Steppe",
+        "authors": [
+          "Smith"
+        ],
+        "year": 2019,
+        "doi": "10.99999/jcal.2019.0312"
+      },
+      "status": "doi_not_found",
+      "matched_title": "",
+      "matched_year": null,
+      "matched_authors": [],
+      "matched_url": "",
+      "similarity": 0.0,
+      "checked_in": [
+        "doi.org"
+      ],
+      "notes": [
+        "doi_not_found"
+      ]
+    }
+  ],
+  "trust": {
+    "trust_index": 49,
+    "band": "low",
+    "counts": {
+      "supported": 5,
+      "disputed": 1,
+      "contradicted": 2,
+      "unverifiable": 1,
+      "opinion": 1
+    },
+    "fabricated_citations": 1,
+    "capped": true
+  },
+  "elapsed_ms": 21434
+}

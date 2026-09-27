@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --bg:#0F1A14; --card:#17271E; --ink:#E8EFEA; --muted:#9FB3A7; --green:#3DBB74; }
+  body { margin:0; width:340px; background:var(--bg); color:var(--ink);
+         font:14px/1.45 system-ui, "Segoe UI", Arial, sans-serif; }
+  .wrap { padding:14px 16px 16px; display:flex; flex-direction:column; gap:10px; }
+  .brand { display:flex; align-items:center; gap:8px; font-weight:700; font-size:17px; }
+  .brand img { width:24px; height:24px; }
+  .muted { color:var(--muted); font-size:12px; }
+  button { border:0; border-radius:10px; padding:10px 12px; font:inherit; font-weight:600; cursor:pointer; }
+  .primary { background:var(--green); color:#06140b; }
+  .ghost { background:var(--card); color:var(--ink); }
+  textarea, input { width:100%; box-sizing:border-box; border:1px solid #2A3D32; border-radius:8px;
+         background:var(--card); color:var(--ink); padding:8px; font:inherit; }
+  textarea { height:90px; resize:vertical; }
+  details summary { cursor:pointer; color:var(--muted); font-size:12px; }
+  .msg { font-size:12px; color:#F2C46B; min-height:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="icons/icon48.png" alt="">Senim</div>
+  <div class="muted">Выделите ответ ИИ на странице и нажмите кнопку — или вставьте текст ниже.<br>Жауапты белгілеп, батырманы басыңыз.</div>
+  <button id="checkSel" class="primary">Проверить выделенное</button>
+  <textarea id="text" placeholder="…или вставьте ответ ИИ сюда"></textarea>
+  <button id="checkText" class="ghost">Проверить этот текст</button>
+  <div id="msg" class="msg"></div>
+  <details>
+    <summary>Адрес сервера Senim</summary>
+    <input id="server" type="url" placeholder="http://127.0.0.1:8000">
+    <div class="muted">После публикации сайта впишите его адрес.</div>
+  </details>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

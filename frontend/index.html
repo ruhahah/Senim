@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Senim — можно ли доверять ответу ИИ?</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%2314532d'/><path d='M30 52l13 13 27-30' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="stylesheet" href="/static/styles.css?v=3">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44"/><path d="M30 52l13 13 27-30"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">Senim</div>
+      <div class="brand-tag" data-i18n="tagline"></div>
+    </div>
+  </div>
+  <div class="top-right">
+    <span id="providerPill" class="pill pill-muted" title=""></span>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button data-lang="kk">ҚАЗ</button>
+      <button data-lang="ru">РУС</button>
+      <button data-lang="en">ENG</button>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- ============ ВВОД ============ -->
+  <section class="card input-card">
+    <h1 data-i18n="title"></h1>
+    <p class="muted" data-i18n="subtitle"></p>
+
+    <label class="field-label" for="question" data-i18n="questionLabel"></label>
+    <input id="question" type="text" autocomplete="off">
+
+    <label class="field-label" for="answer" data-i18n="answerLabel"></label>
+    <textarea id="answer" rows="10" spellcheck="false"></textarea>
+    <div class="row between small muted"><span id="charCount">0 / 12000</span><span data-i18n="privacy"></span></div>
+
+    <div class="examples">
+      <span class="small muted" data-i18n="examples"></span>
+      <div id="exampleChips" class="chips"></div>
+    </div>
+
+    <label class="toggle">
+      <input type="checkbox" id="thinkFirst">
+      <span class="toggle-ui"></span>
+      <span><b data-i18n="thinkFirst"></b><br><span class="small muted" data-i18n="thinkFirstHint"></span></span>
+    </label>
+
+    <div class="actions">
+      <button id="btnCheck" class="btn btn-primary" data-i18n="check"></button>
+      <button id="btnCitations" class="btn" data-i18n="checkCitations"></button>
+      <button id="btnDemo" class="btn btn-ghost" data-i18n="demo"></button>
+    </div>
+    <div id="notice" class="notice hidden"></div>
+
+    <div class="legend">
+      <span><i class="dot s-supported"></i><span data-i18n="st_supported"></span></span>
+      <span><i class="dot s-disputed"></i><span data-i18n="st_disputed"></span></span>
+      <span><i class="dot s-contradicted"></i><span data-i18n="st_contradicted"></span></span>
+      <span><i class="dot s-unverifiable"></i><span data-i18n="st_unverifiable"></span></span>
+    </div>
+  </section>
+
+  <!-- ============ РЕЗУЛЬТАТ ============ -->
+  <section id="resultCol" class="result-col">
+    <div id="emptyState" class="card about">
+      <h3 data-i18n="howTitle"></h3>
+      <div class="steps">
+        <div class="step"><div class="step-n">1</div><div><b data-i18n="how1t"></b><p class="small muted" data-i18n="how1"></p></div></div>
+        <div class="step"><div class="step-n">2</div><div><b data-i18n="how2t"></b><p class="small muted" data-i18n="how2"></p></div></div>
+        <div class="step"><div class="step-n">3</div><div><b data-i18n="how3t"></b><p class="small muted" data-i18n="how3"></p></div></div>
+      </div>
+      <p class="small why" data-i18n="howWhy"></p>
+      <div id="channels" class="channels hidden">
+        <span class="small muted" data-i18n="alsoIn"></span>
+        <a id="lnkBot" class="chip hidden" target="_blank" rel="noopener">✈️ Telegram</a>
+        <a id="lnkExt" class="chip hidden" download>🧩 <span data-i18n="extDownload"></span></a>
+      </div>
+      <p id="extHint" class="small muted hidden" data-i18n="extHint"></p>
+      <p class="small muted" data-i18n="emptyState"></p>
+    </div>
+
+    <div id="progress" class="card progress hidden">
+      <div class="spinner"></div><span id="progressText"></span>
+      <div class="bar"><div id="progressBar"></div></div>
+    </div>
+
+    <div id="summaryCard" class="card summary hidden">
+      <div class="gauge-wrap">
+        <svg class="gauge" viewBox="0 0 120 120">
+          <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+          <circle id="gaugeArc" class="gauge-arc" cx="60" cy="60" r="50"></circle>
+        </svg>
+        <div class="gauge-value"><span id="trustValue">–</span><small>/100</small></div>
+      </div>
+      <div class="summary-text">
+        <div id="bandLabel" class="band"></div>
+        <div id="summaryLine" class="summary-line"></div>
+        <div class="small muted" data-i18n="trustHonest"></div>
+        <div id="cappedNote" class="small warn hidden" data-i18n="capped"></div>
+        <div id="checkMeta" class="small muted"></div>
+      </div>
+    </div>
+
+    <div id="thinkPanel" class="card think hidden">
+      <h3 data-i18n="thinkTitle"></h3>
+      <p class="small muted" data-i18n="thinkInstr"></p>
+      <div class="row gap">
+        <button id="btnReveal" class="btn btn-primary" disabled data-i18n="reveal"></button>
+        <span id="thinkStatus" class="small muted"></span>
+      </div>
+      <div id="thinkScore" class="think-score hidden"></div>
+    </div>
+
+    <div id="textCard" class="card hidden">
+      <div class="row between">
+        <h3 data-i18n="highlighted"></h3>
+        <span class="small muted" data-i18n="clickHint"></span>
+      </div>
+      <div id="highlighted" class="highlighted"></div>
+    </div>
+
+    <div id="claimsCard" class="card hidden">
+      <h3 data-i18n="claims"></h3>
+      <div id="claimsList" class="claims"></div>
+    </div>
+
+    <div id="feedbackCard" class="card feedback hidden">
+      <div class="fb-q">
+        <span data-i18n="fbUseful"></span>
+        <div class="fb-btns" data-q="useful">
+          <button class="chip" data-v="true">👍 <span data-i18n="yes"></span></button>
+          <button class="chip" data-v="false">👎 <span data-i18n="no"></span></button>
+        </div>
+      </div>
+      <div class="fb-q">
+        <span data-i18n="fbNotice"></span>
+        <div class="fb-btns" data-q="would_notice">
+          <button class="chip" data-v="yes" data-i18n="yes"></button>
+          <button class="chip" data-v="no" data-i18n="no"></button>
+          <button class="chip" data-v="unsure" data-i18n="unsure"></button>
+        </div>
+      </div>
+      <p id="fbThanks" class="small verified hidden" data-i18n="fbThanks"></p>
+    </div>
+
+    <div id="citationsCard" class="card hidden">
+      <h3 data-i18n="citations"></h3>
+      <div id="citationsList" class="citations"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot small muted">
+  <div id="impactLine" class="impact"></div>
+  <span data-i18n="footer"></span> · <span id="skillCounter"></span>
+</footer>
+
+<script src="/static/i18n.js?v=3"></script>
+<script src="/static/app.js?v=3"></script>
+</body>
+</html>
