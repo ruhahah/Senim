@@ -98,7 +98,7 @@ async def telegram_webhook(secret: str, request: Request):
     return {"ok": True}
 
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 async def health():
     s = get_settings()
     r = get_router()
@@ -227,7 +227,7 @@ async def cache_clear(request: Request):
     return {"deleted": cache.clear()}
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def index():
     return FileResponse(FRONTEND / "index.html")
 
