@@ -207,7 +207,7 @@ async def extension_zip(request: Request):
         for f in EXTENSION.rglob("*"):
             if f.is_file():
                 data = f.read_bytes()
-                if f.suffix == ".js":
+                if f.suffix in (".js", ".html"):
                     data = data.replace(b"http://127.0.0.1:8000", base.encode())
                 z.writestr(f"senim-extension/{f.relative_to(EXTENSION).as_posix()}", data)
     return Response(buf.getvalue(), media_type="application/zip",

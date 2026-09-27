@@ -1,7 +1,13 @@
 const DEFAULT_SERVER = "http://127.0.0.1:8000";
 const $ = (id) => document.getElementById(id);
 
-chrome.storage.sync.get({ server: DEFAULT_SERVER }, ({ server }) => { $("server").value = server; });
+const LOCAL = /^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i;
+chrome.storage.sync.get({ server: DEFAULT_SERVER }, ({ server }) => {
+  if (!server || (LOCAL.test(server) && !LOCAL.test(DEFAULT_SERVER))) {
+    server = DEFAULT_SERVER; chrome.storage.sync.set({ server });
+  }
+  $("server").value = server;
+});
 $("server").addEventListener("change", () => {
   const v = $("server").value.trim() || DEFAULT_SERVER;
   chrome.storage.sync.set({ server: v });

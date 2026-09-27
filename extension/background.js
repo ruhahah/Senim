@@ -1,10 +1,13 @@
 // Senim: пункт «Проверить в Senim» в меню правой кнопки для выделенного текста.
 const DEFAULT_SERVER = "http://127.0.0.1:8000";
 const MAX_CHARS = 12000;
+const LOCAL = /^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i;
 
 async function getServer() {
-  const { server } = await chrome.storage.sync.get({ server: DEFAULT_SERVER });
-  return (server || DEFAULT_SERVER).replace(/\/+$/, "");
+  let { server } = await chrome.storage.sync.get({ server: DEFAULT_SERVER });
+  // старая сохранённая настройка «локалхост» не должна перебивать адрес опубликованного сайта
+  if (!server || (LOCAL.test(server) && !LOCAL.test(DEFAULT_SERVER))) server = DEFAULT_SERVER;
+  return server.replace(/\/+$/, "");
 }
 
 async function openSenim(text) {
