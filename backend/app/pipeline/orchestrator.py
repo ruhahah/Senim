@@ -16,7 +16,7 @@ from . import citations as cit
 from .scoring import compute_trust, is_fabricated
 from .search import gather_evidence, http_client
 from .text_utils import detect_lang, normalize, split_sentences
-from .verify import (PER_SENTENCE_MAX, extract_sentence_claims, judge_claim, sentence_fallback_claim,
+from .verify import (PER_SENTENCE_MAX, extract_claims, extract_sentence_claims, judge_claim, sentence_fallback_claim,
                      worth_checking)
 
 log = logging.getLogger("senim.pipeline")
@@ -106,6 +106,19 @@ async def run_check(text: str, question: str = "", ui_lang: str | None = None,
         if not router.available:
             yield {"type": "error", "code": "llm_not_configured",
                    "message": "ИИ-провайдер не настроен: добавьте ключ в .env"}
+        elif get_settings().extract_mode == "whole":
+            # старый режим: одно извлечение на весь ответ, затем параллельная проверка утверждений
+            try:
+                claims = await extract_claims(router, text, lang, sentences, question)
+                yield {"type": "claims", "claims": [c.model_dump(mode="json") for c in claims]}
+            except LLMNotConfigured as e:
+                yield {"type": "error", "code": "llm_not_configured", "message": str(e)}
+            except LLMError as e:
+                yield {"type": "error", "code": "llm_failed", "message": str(e)}
+            for fut in asyncio.as_completed([asyncio.create_task(check_one(c)) for c in claims]):
+                r = await fut
+                results.append(r)
+                yield {"type": "claim_result", "result": r.model_dump(mode="json")}
         else:
             # Каждое предложение идёт своим потоком: извлечь утверждения → найти источник → вердикт.
             # Первое предложение не ждёт остальных, поэтому первый результат появляется через секунды.

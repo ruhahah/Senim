@@ -108,6 +108,23 @@ class Provider:
         raise NotImplementedError
 
 
+_CLIENTS: dict = {}
+CALL_LOG: list = []  # (провайдер, секунды) — для scripts/speed_test.py
+
+
+def shared_client(timeout: float) -> httpx.AsyncClient:
+    """Keep-alive клиент на цикл событий (соединение с API переиспользуется между запросами)."""
+    loop = asyncio.get_running_loop()
+    key = (id(loop), timeout)
+    c = _CLIENTS.get(key)
+    if c is None or c.is_closed:
+        if len(_CLIENTS) > 8:
+            _CLIENTS.clear()
+        c = httpx.AsyncClient(timeout=timeout, limits=httpx.Limits(max_connections=64, max_keepalive_connections=32))
+        _CLIENTS[key] = c
+    return c
+
+
 @dataclass
 class OpenAICompatProvider(Provider):
     base_url: str = ""
@@ -129,13 +146,15 @@ class OpenAICompatProvider(Provider):
         body.update(self.extra)
         headers = {"Authorization": f"Bearer {self.api_key}"}
         url = self.base_url.rstrip("/") + "/chat/completions"
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        client = shared_client(self.timeout)  # одно соединение на все запросы: без TLS-рукопожатия каждый раз
+        t0 = time.perf_counter()
+        r = await client.post(url, json=body, headers=headers)
+        if r.status_code == 400 and (self.extra or "response_format" in body):
+            # некоторые модели не принимают доп. параметры — пробуем «чистый» запрос
+            for k in list(self.extra) + ["response_format"]:
+                body.pop(k, None)
             r = await client.post(url, json=body, headers=headers)
-            if r.status_code == 400 and (self.extra or "response_format" in body):
-                # некоторые модели не принимают доп. параметры — пробуем «чистый» запрос
-                for k in list(self.extra) + ["response_format"]:
-                    body.pop(k, None)
-                r = await client.post(url, json=body, headers=headers)
+        CALL_LOG.append((self.name, time.perf_counter() - t0))
         _raise_for_status(self.name, r)
         data = r.json()
         usage = data.get("usage") or {}
@@ -203,13 +222,13 @@ def build_provider(name: str, s: Settings) -> Optional[Provider]:
         return OpenAICompatProvider(
             name, s.gemini_model, s.gemini_api_key, t,
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-            extra={"reasoning_effort": "low"},
+            extra={"reasoning_effort": s.gemini_reasoning_effort} if s.gemini_reasoning_effort else {},
         )
     if name == "openai" and s.openai_api_key:
         return OpenAICompatProvider(
             name, s.openai_model, s.openai_api_key, t,
             base_url="https://api.openai.com/v1",
-            extra={"reasoning_effort": "low"},
+            extra={"reasoning_effort": s.openai_reasoning_effort} if s.openai_reasoning_effort else {},
             max_tokens_field="max_completion_tokens",
         )
     if name == "groq" and s.groq_api_key:
@@ -239,15 +258,22 @@ class LLMRouter:
 
     def __init__(self, providers: list[Provider], max_concurrency: int = 8):
         self.providers = providers
-        self._sems: dict[str, asyncio.Semaphore] = {
-            p.name: asyncio.Semaphore(min(max_concurrency, self.PROVIDER_CONCURRENCY.get(p.name, max_concurrency)))
-            for p in providers
-        }
+        self.max_concurrency = max_concurrency
+        self._sems: dict[str, asyncio.Semaphore] = {}
+        self._sems_loop: Optional[asyncio.AbstractEventLoop] = None
         self._cooldown_until: dict[str, float] = {}
 
     def _sem(self, p: Provider) -> asyncio.Semaphore:
+        # семафоры привязаны к циклу событий: скрипты вызывают asyncio.run несколько раз подряд
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if loop is not self._sems_loop:
+            self._sems, self._sems_loop = {}, loop
         if p.name not in self._sems:
-            self._sems[p.name] = asyncio.Semaphore(2)
+            limit = min(self.max_concurrency, self.PROVIDER_CONCURRENCY.get(p.name, self.max_concurrency))
+            self._sems[p.name] = asyncio.Semaphore(limit)
         return self._sems[p.name]
 
     def _order(self) -> list[Provider]:

@@ -29,12 +29,14 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.5-flash"
+    gemini_reasoning_effort: str = "low"
 
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-haiku-4-5"
 
     openai_api_key: str = ""
     openai_model: str = "gpt-6-luna"
+    openai_reasoning_effort: str = "low"   # minimal | low | medium; пусто — не передавать
 
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
@@ -77,6 +79,7 @@ class Settings(BaseSettings):
 
     # ---------- Прочее ----------
     max_claims: int = 24
+    extract_mode: str = "sentence"   # sentence — каждое предложение параллельно; whole — одним запросом
     cache_path: str = str(ROOT_DIR / "data" / "cache.sqlite")
     cache_enabled: bool = True
     warm_examples: bool = True   # при запуске прогнать примеры сайта, чтобы они отвечали мгновенно
