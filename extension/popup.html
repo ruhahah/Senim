@@ -28,6 +28,12 @@
   <textarea id="text" placeholder="…или вставьте ответ ИИ сюда"></textarea>
   <button id="checkText" class="ghost">Проверить этот текст</button>
   <div id="msg" class="msg"></div>
+  <div class="muted">В ChatGPT и Gemini под каждым ответом есть кнопка «Проверить в Senim».</div>
+  <details>
+    <summary>Мой класс (режим учителя)</summary>
+    <input id="classCode" type="text" maxlength="8" placeholder="Код класса, например ABC234" style="margin-top:6px;text-transform:uppercase">
+    <input id="student" type="text" maxlength="40" placeholder="Ваше имя (увидит учитель)" style="margin-top:6px">
+  </details>
   <details>
     <summary>Адрес сервера Senim</summary>
     <input id="server" type="url" placeholder="https://senim-616q.onrender.com">

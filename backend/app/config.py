@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     llm_price_out: float = 0.0
 
     llm_timeout_s: float = 60.0
-    llm_max_concurrency: int = 4
+    llm_max_concurrency: int = 8   # одновременных запросов к одному провайдеру (Groq всегда ≤ 2)
 
     # ---------- Поиск доказательств ----------
     tavily_api_key: str = ""          # необязательно; без него — только Википедия + база Senim
@@ -81,6 +81,16 @@ class Settings(BaseSettings):
     cache_enabled: bool = True
     stats_path: str = str(ROOT_DIR / "data" / "stats.sqlite")
     stats_enabled: bool = True
+    # Постоянная база (PostgreSQL, например бесплатный Neon): статистика и классы учителей
+    # переживают перезапуск хостинга. Пусто = локальный файл SQLite (stats_path).
+    database_url: str = ""
+    # Итоги, накопленные ДО подключения постоянной базы (JSON из старого /api/stats) —
+    # прибавляются к счётчику, чтобы при переезде не потерять реальную историю.
+    stats_baseline: str = ""
+
+    # ---------- Режим учителя ----------
+    class_rate_limit_per_hour: int = 400   # проверок в час на один класс (весь класс часто за одним IP школы)
+    class_student_per_hour: int = 30       # проверок в час на одного ученика класса
 
     @property
     def valid_contact_email(self) -> str:

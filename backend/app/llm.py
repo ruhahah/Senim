@@ -233,10 +233,22 @@ class LLMRouter:
     COOLDOWN_S = 120.0  # сколько секунд не трогать провайдера после 429/503
     MAX_ROUNDS = 3      # сколько раз ждать, если заняты ВСЕ провайдеры
 
-    def __init__(self, providers: list[Provider], max_concurrency: int = 4):
+    # У каждого провайдера свой лимит одновременных запросов: быстрый основной ИИ
+    # не должен ждать из-за маленького лимита бесплатного Groq (8K токенов в минуту).
+    PROVIDER_CONCURRENCY = {"groq": 2}
+
+    def __init__(self, providers: list[Provider], max_concurrency: int = 8):
         self.providers = providers
-        self._sem = asyncio.Semaphore(max_concurrency)
+        self._sems: dict[str, asyncio.Semaphore] = {
+            p.name: asyncio.Semaphore(min(max_concurrency, self.PROVIDER_CONCURRENCY.get(p.name, max_concurrency)))
+            for p in providers
+        }
         self._cooldown_until: dict[str, float] = {}
+
+    def _sem(self, p: Provider) -> asyncio.Semaphore:
+        if p.name not in self._sems:
+            self._sems[p.name] = asyncio.Semaphore(2)
+        return self._sems[p.name]
 
     def _order(self) -> list[Provider]:
         """Перегруженные провайдеры уходят в конец очереди на COOLDOWN_S секунд."""
@@ -269,7 +281,7 @@ class LLMRouter:
                     return hit
                 for attempt in range(2):
                     try:
-                        async with self._sem:
+                        async with self._sem(p):
                             prompt = user if attempt == 0 else (
                                 user + "\n\nВАЖНО: верни ТОЛЬКО корректный JSON без пояснений."
                             )

@@ -4,3 +4,5 @@ httpx>=0.27
 pydantic>=2.6
 pydantic-settings>=2.2
 rapidfuzz>=3.6
+qrcode>=7.4
+psycopg[binary]>=3.1

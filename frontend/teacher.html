@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Senim — панель учителя</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%2314532d'/><path d='M30 52l13 13 27-30' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="stylesheet" href="/static/styles.css?v=5">
+  <style>
+    .t-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .kpi { background: var(--card, #fff); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+    .kpi b { display: block; font-size: 28px; line-height: 1.1; }
+    .kpi span { color: var(--muted); font-size: 13px; }
+    .kpi.accent { background: var(--green-bg); border-color: transparent; }
+    .invite { display: grid; grid-template-columns: 1fr 180px; gap: 20px; align-items: center; }
+    .invite img { width: 180px; height: 180px; background: #fff; border-radius: 12px; padding: 6px; }
+    .code-big { font-size: 40px; font-weight: 800; letter-spacing: .12em; }
+    .copyrow { display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+    .copyrow code { background: var(--gray-bg); padding: 6px 10px; border-radius: 8px; font-size: 13px; word-break: break-all; }
+    table.t { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.t th, table.t td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    table.t th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .prob { padding: 10px 12px; border-radius: 10px; margin-bottom: 8px; background: var(--gray-bg); }
+    .prob.contradicted { background: var(--red-bg); }
+    .prob.disputed { background: var(--yellow-bg); }
+    .prob .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .warnbox { background: var(--yellow-bg); color: var(--yellow); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+    .band-high { color: var(--green); } .band-medium { color: var(--yellow); } .band-low { color: var(--red); }
+    @media (max-width: 700px) { .invite { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" style="text-decoration:none;color:inherit">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44"/><path d="M30 52l13 13 27-30"/></svg></div>
+    <div><div class="brand-name">Senim</div><div class="brand-tag" data-t="tag"></div></div>
+  </a>
+  <div class="top-right">
+    <nav class="nav"><a href="/" data-t="navCheck"></a><a href="/trainer" data-t="navTrainer"></a><a href="/rating" data-t="navRating"></a><a href="/teacher" class="on" data-t="navTeacher"></a></nav>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button data-lang="kk">ҚАЗ</button><button data-lang="ru">РУС</button><button data-lang="en">ENG</button>
+    </div>
+  </div>
+</header>
+
+<main class="t-wrap">
+  <!-- создание класса -->
+  <section id="createCard" class="card hidden">
+    <h1 data-t="createTitle"></h1>
+    <p class="muted" data-t="createSub"></p>
+    <ol class="small" style="line-height:1.7">
+      <li data-t="step1"></li><li data-t="step2"></li><li data-t="step3"></li>
+    </ol>
+    <label class="field-label" for="clsName" data-t="nameLabel"></label>
+    <div class="row gap">
+      <input id="clsName" type="text" maxlength="60" style="flex:1" autocomplete="off">
+      <button id="btnCreate" class="btn btn-primary" data-t="create"></button>
+    </div>
+    <div id="createErr" class="notice error hidden"></div>
+  </section>
+
+  <!-- панель класса -->
+  <section id="dash" class="hidden" style="display:flex;flex-direction:column;gap:16px">
+    <div class="card">
+      <div class="invite">
+        <div>
+          <div class="small muted" data-t="classLbl"></div>
+          <h1 id="dName" style="margin:2px 0 8px"></h1>
+          <div class="small muted" data-t="codeLbl"></div>
+          <div id="dCode" class="code-big"></div>
+          <div class="copyrow"><span class="small muted" data-t="studentLink"></span><code id="dJoin"></code><button class="btn" data-copy="dJoin" data-t="copy"></button></div>
+          <div class="copyrow"><span class="small muted" data-t="botLink"></span><code id="dBot"></code><button class="btn" data-copy="dBot" data-t="copy"></button></div>
+          <div id="keyWarn" class="warnbox hidden" style="margin-top:12px">
+            <b data-t="saveTitle"></b> <span data-t="saveText"></span>
+            <div class="copyrow"><code id="dDash"></code><button class="btn" data-copy="dDash" data-t="copy"></button></div>
+          </div>
+        </div>
+        <img id="dQr" alt="QR">
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><b id="kChecks">0</b><span data-t="kChecks"></span></div>
+      <div class="kpi"><b id="kStudents">0</b><span data-t="kStudents"></span></div>
+      <div class="kpi"><b id="kErrors">0</b><span data-t="kErrors"></span></div>
+      <div class="kpi"><b id="kTrust">–</b><span data-t="kTrust"></span></div>
+      <div class="kpi accent"><b id="kSelf">–</b><span data-t="kSelf"></span></div>
+    </div>
+
+    <div class="card">
+      <h3 data-t="trTitle"></h3>
+      <p class="small muted" data-t="trSub"></p>
+      <div class="row gap" style="flex-wrap:wrap;align-items:flex-end">
+        <label style="flex:2;min-width:180px"><span class="field-label" data-t="trTopic"></span><input id="trTopic" type="text" maxlength="80" style="width:100%" autocomplete="off"></label>
+        <label><span class="field-label" data-t="trLang"></span><select id="trLang" class="btn"><option value="kk">Қазақша</option><option value="ru">Русский</option><option value="en">English</option></select></label>
+        <label><span class="field-label" data-t="trErr"></span><select id="trErr" class="btn"><option>1</option><option selected>2</option><option>3</option></select></label>
+        <button id="btnTrainer" class="btn btn-primary" data-t="trCreate"></button>
+      </div>
+      <div id="trNew" class="copyrow hidden"><span class="small muted" data-t="trLink"></span><code id="trLinkCode"></code><button class="btn" data-copy="trLinkCode" data-t="copy"></button></div>
+      <div id="trErrBox" class="notice error hidden"></div>
+      <div id="trList" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <h3 data-t="topTitle"></h3>
+      <p class="small muted" data-t="topSub"></p>
+      <div id="topList"></div>
+    </div>
+
+    <div class="card">
+      <h3 data-t="studentsTitle"></h3>
+      <div style="overflow-x:auto"><table class="t"><thead><tr>
+        <th data-t="thStudent"></th><th data-t="thChecks"></th><th data-t="thTrust"></th><th data-t="thErrors"></th><th data-t="thSelf"></th>
+      </tr></thead><tbody id="stBody"></tbody></table></div>
+    </div>
+
+    <div class="card">
+      <h3 data-t="recentTitle"></h3>
+      <div style="overflow-x:auto"><table class="t"><thead><tr>
+        <th data-t="thWhen"></th><th data-t="thStudent"></th><th data-t="thText"></th><th data-t="thIdx"></th><th data-t="thFound"></th>
+      </tr></thead><tbody id="recBody"></tbody></table></div>
+      <p class="small muted" data-t="autoRefresh"></p>
+    </div>
+  </section>
+
+  <div id="dashErr" class="notice error hidden"></div>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const T = {
+    ru: {
+      trTitle: "Тренажёр «Найди ложь ИИ»", trSub: "Senim пишет ответ ИИ по теме урока и прячет в нём ошибки. Ученики ищут их на время — у раунда свой рейтинг.", trTopic: "Тема урока (например, Абылай хан)", trLang: "Язык", trErr: "Ошибок", trCreate: "Создать раунд", trLink: "Ссылка для учеников:", trWait: "Составляю раунд…", trPlays: "сыграли", trFound: "нашли ошибок", trNone: "Раундов пока нет.",
+      navCheck: "Проверка", navTrainer: "Тренажёр", navRating: "Рейтинг ИИ", navTeacher: "Учителю",
+      tag: "Панель учителя", createTitle: "Класс в Senim", createSub: "Ученики проверяют ответы ИИ, а вы видите, где ИИ ошибается и насколько хорошо ученики сами замечают ошибки.",
+      step1: "Создайте класс — получите код и QR-код для учеников.", step2: "Ученики открывают сайт по ссылке или пишут боту /class КОД — и проверяют ответы ИИ как обычно.",
+      step3: "Здесь вы видите проверки, частые ошибки ИИ и навык «Сначала подумай».", nameLabel: "Название класса (например, 9А · история)", create: "Создать класс",
+      classLbl: "Класс", codeLbl: "Код для учеников", studentLink: "Ссылка для учеников:", botLink: "Telegram:", copy: "Копировать", copied: "Скопировано",
+      saveTitle: "Сохраните ссылку на эту панель!", saveText: "Это ваш личный ключ: без него панель не открыть. Добавьте в закладки или отправьте себе.",
+      kChecks: "проверок", kStudents: "учеников", kErrors: "ошибок ИИ поймано", kTrust: "средний индекс доверия", kSelf: "ошибок ученики нашли сами (режим «Сначала подумай»)",
+      topTitle: "Частые ошибки ИИ в этом классе", topSub: "Утверждения ИИ, которые Senim опроверг или счёл спорными. Хороший материал для разбора на уроке.",
+      noTop: "Пока нет — когда ученики проверят ответы ИИ, здесь появятся найденные ошибки.",
+      studentsTitle: "Ученики", thStudent: "Ученик", thChecks: "Проверок", thTrust: "Средний индекс", thErrors: "Ошибок ИИ", thSelf: "Нашёл сам",
+      recentTitle: "Последние проверки", thWhen: "Когда", thText: "Ответ ИИ", thFound: "Найдено", autoRefresh: "Панель обновляется сама каждые 20 секунд.",
+      noData: "Пока пусто — дайте ученикам код класса.", notFound: "Класс не найден или неверный ключ в ссылке.",
+      disp: "спорных", thIdx: "Индекс", st_contradicted: "опровергнуто", st_disputed: "спорно", times: "раз", fix: "Верно:", nameNeeded: "Введите название класса.",
+      found: (e, d) => `ошибок: ${e}, спорных: ${d}`,
+    },
+    kk: {
+      trTitle: "«ЖИ-дің өтірігін тап» жаттықтырғышы", trSub: "Senim сабақ тақырыбы бойынша ЖИ жауабын жазып, оған қателер жасырады. Оқушылар оларды уақытқа іздейді — раундтың өз рейтингі бар.", trTopic: "Сабақ тақырыбы (мысалы, Абылай хан)", trLang: "Тіл", trErr: "Қате саны", trCreate: "Раунд құру", trLink: "Оқушыларға сілтеме:", trWait: "Раунд құрастырылып жатыр…", trPlays: "ойнады", trFound: "қатені тапты", trNone: "Әзірге раунд жоқ.",
+      navCheck: "Тексеру", navTrainer: "Жаттықтырғыш", navRating: "ЖИ рейтингі", navTeacher: "Мұғалімге",
+      tag: "Мұғалім панелі", createTitle: "Senim-дегі сынып", createSub: "Оқушылар ЖИ жауаптарын тексереді, ал сіз ЖИ қай жерде қателесетінін және оқушылар қатені өздері қаншалықты байқайтынын көресіз.",
+      step1: "Сынып құрыңыз — оқушыларға код пен QR-код аласыз.", step2: "Оқушылар сайтты сілтеме арқылы ашады немесе ботқа /class КОД жазады — және ЖИ жауабын әдеттегідей тексереді.",
+      step3: "Мұнда тексерулер, ЖИ-дің жиі қателері және «Алдымен ойлан» дағдысы көрінеді.", nameLabel: "Сынып атауы (мысалы, 9А · тарих)", create: "Сынып құру",
+      classLbl: "Сынып", codeLbl: "Оқушыларға арналған код", studentLink: "Оқушыларға сілтеме:", botLink: "Telegram:", copy: "Көшіру", copied: "Көшірілді",
+      saveTitle: "Осы панельдің сілтемесін сақтаңыз!", saveText: "Бұл — сіздің жеке кілтіңіз: онсыз панель ашылмайды. Бетбелгіге қосыңыз немесе өзіңізге жіберіңіз.",
+      kChecks: "тексеру", kStudents: "оқушы", kErrors: "ЖИ қатесі ұсталды", kTrust: "орташа сенім индексі", kSelf: "қатені оқушылар өздері тапты («Алдымен ойлан» режимі)",
+      topTitle: "Осы сыныптағы ЖИ-дің жиі қателері", topSub: "Senim жоққа шығарған немесе даулы деп тапқан ЖИ тұжырымдары. Сабақта талдауға жақсы материал.",
+      noTop: "Әзірге жоқ — оқушылар ЖИ жауабын тексергенде, табылған қателер осында шығады.",
+      studentsTitle: "Оқушылар", thStudent: "Оқушы", thChecks: "Тексеру", thTrust: "Орташа индекс", thErrors: "ЖИ қатесі", thSelf: "Өзі тапты",
+      recentTitle: "Соңғы тексерулер", thWhen: "Қашан", thText: "ЖИ жауабы", thFound: "Табылды", autoRefresh: "Панель әр 20 секунд сайын өзі жаңарады.",
+      noData: "Әзірге бос — оқушыларға сынып кодын беріңіз.", notFound: "Сынып табылмады немесе сілтемедегі кілт қате.",
+      disp: "даулы", thIdx: "Индекс", st_contradicted: "жоққа шығарылды", st_disputed: "даулы", times: "рет", fix: "Дұрысы:", nameNeeded: "Сынып атауын жазыңыз.",
+      found: (e, d) => `қате: ${e}, даулы: ${d}`,
+    },
+    en: {
+      trTitle: "“Spot the AI's lie” trainer", trSub: "Senim writes an AI answer on your lesson topic and hides mistakes in it. Students hunt for them against the clock — each round has a leaderboard.", trTopic: "Lesson topic (e.g. Abylai Khan)", trLang: "Language", trErr: "Mistakes", trCreate: "Create round", trLink: "Student link:", trWait: "Building the round…", trPlays: "played", trFound: "of mistakes found", trNone: "No rounds yet.",
+      navCheck: "Check", navTrainer: "Trainer", navRating: "AI rating", navTeacher: "Teachers",
+      tag: "Teacher dashboard", createTitle: "A class in Senim", createSub: "Students check AI answers; you see where the AI goes wrong and how well students spot mistakes on their own.",
+      step1: "Create a class — get a code and a QR code for students.", step2: "Students open the site via the link or send /class CODE to the bot, then check AI answers as usual.",
+      step3: "Here you see checks, the AI's most common mistakes and the “Think first” skill.", nameLabel: "Class name (e.g. 9A · history)", create: "Create class",
+      classLbl: "Class", codeLbl: "Code for students", studentLink: "Student link:", botLink: "Telegram:", copy: "Copy", copied: "Copied",
+      saveTitle: "Save the link to this dashboard!", saveText: "It is your personal key — the dashboard can't be opened without it. Bookmark it or send it to yourself.",
+      kChecks: "checks", kStudents: "students", kErrors: "AI errors caught", kTrust: "average trust index", kSelf: "of errors students found themselves (“Think first”)",
+      topTitle: "The AI's most common mistakes in this class", topSub: "AI claims that Senim refuted or found disputed — good material for a lesson.",
+      noTop: "Nothing yet — errors will appear here once students check AI answers.",
+      studentsTitle: "Students", thStudent: "Student", thChecks: "Checks", thTrust: "Avg. index", thErrors: "AI errors", thSelf: "Found alone",
+      recentTitle: "Recent checks", thWhen: "When", thText: "AI answer", thFound: "Found", autoRefresh: "The dashboard refreshes every 20 seconds.",
+      noData: "Empty so far — give your students the class code.", notFound: "Class not found or wrong key in the link.",
+      disp: "disputed", thIdx: "Index", st_contradicted: "refuted", st_disputed: "disputed", times: "times", fix: "Correct:", nameNeeded: "Enter a class name.",
+      found: (e, d) => `errors: ${e}, disputed: ${d}`,
+    },
+  };
+  const $ = (id) => document.getElementById(id);
+  let lang = (() => { try { return localStorage.getItem("senim.lang") || "ru"; } catch { return "ru"; } })();
+  const tt = (k) => (T[lang] || T.ru)[k];
+  const params = new URLSearchParams(location.search);
+  const code = (params.get("code") || "").toUpperCase();
+  const key = params.get("key") || "";
+  let last = null, botUser = "";
+
+  function el(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) { if (k === "class") e.className = v; else e.setAttribute(k, v); }
+    for (const k of kids) e.append(k instanceof Node ? k : document.createTextNode(k == null ? "" : String(k)));
+    return e;
+  }
+  function applyT() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-t]").forEach((e) => { e.textContent = tt(e.dataset.t); });
+    document.querySelectorAll(".lang-switch button").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
+    if (last) render(last);
+  }
+  document.querySelectorAll(".lang-switch button").forEach((b) => b.addEventListener("click", () => {
+    lang = b.dataset.lang; try { localStorage.setItem("senim.lang", lang); } catch {} applyT();
+  }));
+  document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($(b.dataset.copy).textContent); b.textContent = tt("copied"); setTimeout(() => (b.textContent = tt("copy")), 1500); } catch {}
+  }));
+
+  function fmtTime(ts) {
+    const d = new Date(ts * 1000);
+    return d.toLocaleString(lang === "en" ? "en-GB" : lang === "kk" ? "kk-KZ" : "ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  }
+  const pct = (x) => (x == null ? "–" : Math.round(x * 100) + "%");
+
+  function render(d) {
+    last = d;
+    $("dName").textContent = d.class.name;
+    $("dCode").textContent = d.class.code;
+    const join = `${location.origin}/?class=${d.class.code}`;
+    $("dJoin").textContent = join;
+    $("dBot").textContent = botUser ? `https://t.me/${botUser}?start=class_${d.class.code}` : `/class ${d.class.code}`;
+    $("dDash").textContent = `${location.origin}/teacher?code=${d.class.code}&key=${encodeURIComponent(key)}`;
+    $("dQr").src = `/api/qr.svg?text=${encodeURIComponent(join)}`;
+    const k = d.totals;
+    $("kChecks").textContent = k.checks;
+    $("kStudents").textContent = k.students;
+    $("kErrors").textContent = k.errors;
+    $("kErrors").nextElementSibling.textContent = tt("kErrors") + (k.disputed ? ` · +${k.disputed} ${tt("disp")}` : "");
+    $("kTrust").textContent = k.avg_trust == null ? "–" : k.avg_trust;
+    $("kSelf").textContent = pct(k.self_found_share);
+
+    const top = $("topList");
+    top.replaceChildren(...(d.top_problems.length ? d.top_problems.map((p) => el("div", { class: `prob ${p.status}` },
+      el("div", {}, p.text),
+      el("div", { class: "meta" }, `${tt("st_" + p.status)} · ${p.count} ${tt("times")}` + (p.correction ? ` · ${tt("fix")} ${p.correction}` : ""))))
+      : [el("p", { class: "small muted" }, tt("noTop"))]));
+
+    $("stBody").replaceChildren(...(d.by_student.length ? d.by_student.map((s) => el("tr", {},
+      el("td", {}, s.student), el("td", {}, s.checks), el("td", {}, s.avg_trust == null ? "–" : s.avg_trust),
+      el("td", {}, s.errors), el("td", {}, s.self_found_share == null ? "–" : `${pct(s.self_found_share)} (${s.think_rounds})`)))
+      : [el("tr", {}, el("td", { colspan: "5", class: "muted" }, tt("noData")))]));
+
+    const rounds = d.trainer || [];
+    $("trList").replaceChildren(...(rounds.length ? rounds.map((r) => el("div", { class: "prob" },
+      el("div", {}, el("b", {}, r.topic), ` · ${r.lang} · ${fmtTime(r.created)} · `,
+        el("a", { href: `/trainer?r=${r.id}`, target: "_blank" }, `/trainer?r=${r.id}`)),
+      el("div", { class: "meta" }, `${r.plays} ${tt("trPlays")}` + (r.found_share == null ? "" : ` · ${pct(r.found_share)} ${tt("trFound")}`) +
+        (r.leaderboard.length ? " · 🏆 " + r.leaderboard.slice(0, 3).map((x) => `${x.student} ${x.score}`).join(", ") : ""))))
+      : [el("p", { class: "small muted" }, tt("trNone"))]));
+
+    $("recBody").replaceChildren(...(d.recent.length ? d.recent.map((r) => el("tr", {},
+      el("td", { class: "small" }, fmtTime(r.ts)), el("td", {}, r.student),
+      el("td", { class: "small" }, (r.snippet || "").slice(0, 160) + ((r.snippet || "").length > 160 ? "…" : "")),
+      el("td", { class: `band-${r.band}` }, r.band === "na" ? "–" : r.trust),
+      el("td", { class: "small" }, tt("found")(r.contradicted + r.fabricated_citations, r.disputed))))
+      : [el("tr", {}, el("td", { colspan: "5", class: "muted" }, tt("noData")))]));
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(`/api/class/${encodeURIComponent(code)}/dashboard?key=${encodeURIComponent(key)}`);
+      if (!res.ok) throw new Error(res.status);
+      render(await res.json());
+      $("dash").classList.remove("hidden");
+      $("dashErr").classList.add("hidden");
+    } catch {
+      if (!last) { $("dashErr").textContent = tt("notFound"); $("dashErr").classList.remove("hidden"); }
+    }
+  }
+
+  async function createRound() {
+    $("trErrBox").classList.add("hidden");
+    $("btnTrainer").disabled = true; const label = $("btnTrainer").textContent; $("btnTrainer").textContent = tt("trWait");
+    try {
+      const res = await fetch(`/api/class/${encodeURIComponent(code)}/trainer`, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, topic: $("trTopic").value.trim(), lang: $("trLang").value, n_errors: Number($("trErr").value) }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.detail || res.status);
+      $("trLinkCode").textContent = location.origin + d.path;
+      $("trNew").classList.remove("hidden");
+      load();
+    } catch (e) {
+      $("trErrBox").textContent = String(e.message || e); $("trErrBox").classList.remove("hidden");
+    } finally { $("btnTrainer").disabled = false; $("btnTrainer").textContent = label; }
+  }
+
+  async function create() {
+    const name = $("clsName").value.trim();
+    if (!name) { $("createErr").textContent = tt("nameNeeded"); $("createErr").classList.remove("hidden"); return; }
+    $("btnCreate").disabled = true;
+    try {
+      const res = await fetch("/api/class", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+      const c = await res.json();
+      if (!res.ok) throw new Error(c.detail || res.status);
+      location.href = `/teacher?code=${c.code}&key=${encodeURIComponent(c.key)}&new=1`;
+    } catch (e) {
+      $("createErr").textContent = String(e.message || e); $("createErr").classList.remove("hidden");
+      $("btnCreate").disabled = false;
+    }
+  }
+
+  fetch("/api/health").then((r) => r.json()).then((h) => {
+    const m = ((h.links || {}).telegram_bot || "").match(/t\.me\/([^/?]+)/);
+    botUser = m ? m[1] : ""; if (last) render(last);
+  }).catch(() => {});
+
+  applyT();
+  if (code && key) {
+    if (params.get("new")) {
+      $("keyWarn").classList.remove("hidden");
+      history.replaceState(null, "", `/teacher?code=${code}&key=${encodeURIComponent(key)}`);
+    }
+    $("trLang").value = ["kk", "ru", "en"].includes(lang) ? lang : "ru";
+    $("btnTrainer").addEventListener("click", createRound);
+    load();
+    setInterval(load, 20000);
+  } else {
+    $("createCard").classList.remove("hidden");
+    $("btnCreate").addEventListener("click", create);
+    $("clsName").addEventListener("keydown", (e) => { if (e.key === "Enter") create(); });
+  }
+})();
+</script>
+</body>
+</html>

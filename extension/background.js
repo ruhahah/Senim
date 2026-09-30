@@ -44,3 +44,33 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg && msg.type === "senim-open") openSenim(msg.text);
 });
+
+
+// ---- проверка прямо со страницы ChatGPT / Gemini (content.js): запрос к API Senim из фона
+async function checkInline(text, ai) {
+  const server = await getServer();
+  const { classCode, student } = await chrome.storage.sync.get({ classCode: "", student: "" });
+  const body = { text: text.slice(0, MAX_CHARS), source_ai: ai || "" };
+  if (classCode && student) { body.class_code = classCode; body.student = student; }
+  const fullUrl = `${server}/?src=extension&ai=${encodeURIComponent(ai || "")}&text=${encodeURIComponent(text.slice(0, 1800))}`;
+  try {
+    const res = await fetch(`${server}/api/check?channel=extension`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const d = data.detail;
+      return { ok: false, error: (d && d.message) || (typeof d === "string" ? d : `HTTP ${res.status}`), fullUrl };
+    }
+    return { ok: true, data, fullUrl };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message || e), fullUrl };
+  }
+}
+
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg && msg.type === "senim-check") {
+    checkInline(msg.text || "", msg.ai).then(sendResponse);
+    return true; // ответ придёт асинхронно
+  }
+});

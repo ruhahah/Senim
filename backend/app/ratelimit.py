@@ -66,6 +66,39 @@ def check_and_count(user_key: str) -> None:
         _daily.append(now)
 
 
+def check_and_count_class(code: str, student: str) -> None:
+    """Для класса: весь класс часто сидит за одним IP школы, поэтому лимит считаем
+    на ученика и на класс, а не на IP. Дневной лимит всего сервиса действует как обычно."""
+    s = get_settings()
+    now = time.time()
+    limits = [(f"class:{code}", s.class_rate_limit_per_hour),
+              (f"class:{code}:{student.lower()}", s.class_student_per_hour)]
+    with _lock:
+        _trim(_daily, DAY, now)
+        if s.rate_limit_daily_total and len(_daily) >= s.rate_limit_daily_total:
+            raise RateLimited("total", int(DAY - (now - _daily[0])))
+        for key, lim in limits:
+            q = _per_user[key]
+            _trim(q, HOUR, now)
+            if lim and len(q) >= lim:
+                raise RateLimited("user", int(HOUR - (now - q[0])))
+        for key, _ in limits:
+            _per_user[key].append(now)
+        _daily.append(now)
+
+
+def hit(key: str, per_hour: int) -> bool:
+    """Простой счётчик для бесплатных действий (например, создание класса). True = можно."""
+    now = time.time()
+    with _lock:
+        q = _per_user["misc:" + key]
+        _trim(q, HOUR, now)
+        if per_hour and len(q) >= per_hour:
+            return False
+        q.append(now)
+        return True
+
+
 def client_key(request) -> str:
     """IP клиента. За прокси хостинга (Hugging Face, Render) — первый адрес из X-Forwarded-For."""
     fwd = request.headers.get("x-forwarded-for", "")

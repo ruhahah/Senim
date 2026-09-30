@@ -8,7 +8,7 @@ from typing import AsyncIterator
 
 from rapidfuzz import fuzz
 
-from .. import stats
+from .. import classroom, stats
 from ..llm import LLMError, LLMNotConfigured, get_router, new_usage
 from ..schemas import (Claim, ClaimResult, ClaimType, CitationResult, CitationStatus, Status)
 from . import citations as cit
@@ -64,7 +64,8 @@ def citation_claim_result(claim: Claim, r: CitationResult | None, lang: str) -> 
 
 
 async def run_check(text: str, question: str = "", ui_lang: str | None = None,
-                    channel: str = "web") -> AsyncIterator[dict]:
+                    channel: str = "web", class_code: str = "", student: str = "",
+                    source_ai: str = "") -> AsyncIterator[dict]:
     t0 = time.perf_counter()
     usage = new_usage()  # токены и стоимость именно этой проверки
     lang = detect_lang(text)
@@ -119,18 +120,26 @@ async def run_check(text: str, question: str = "", ui_lang: str | None = None,
     trust_json = trust.model_dump(mode="json")
     try:
         if claims or cit_results:  # пустые/неудачные прогоны в статистику эффекта не пишем
-            stats.record(channel, lang, trust_json, elapsed_ms, usage)
+            stats.record(channel, lang, trust_json, elapsed_ms, usage, source_ai)
     except Exception as e:  # noqa: BLE001 — статистика не должна ломать проверку
         log.warning("stats not recorded: %s", e)
+    if class_code and (claims or cit_results):
+        try:
+            classroom.record_check(class_code, student, channel, lang, text,
+                                   [c.model_dump(mode="json") for c in claims],
+                                   [r.model_dump(mode="json") for r in results], trust_json)
+        except Exception as e:  # noqa: BLE001
+            log.warning("class check not recorded: %s", e)
     yield {"type": "done", "trust": trust_json, "elapsed_ms": elapsed_ms,
            "usage": {k: (round(v, 6) if isinstance(v, float) else v) for k, v in usage.items()}}
 
 
 async def run_check_full(text: str, question: str = "", ui_lang: str | None = None,
-                         channel: str = "api") -> dict:
+                         channel: str = "api", class_code: str = "", student: str = "",
+                         source_ai: str = "") -> dict:
     """То же самое, но одним JSON (для бенчмарка, API и бота)."""
     out: dict = {"claims": [], "results": [], "citations": [], "errors": []}
-    async for ev in run_check(text, question, ui_lang, channel):
+    async for ev in run_check(text, question, ui_lang, channel, class_code, student, source_ai):
         t = ev["type"]
         if t == "start":
             out.update(lang=ev["lang"], sentences=ev["sentences"], provider=ev["provider"])

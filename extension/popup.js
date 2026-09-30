@@ -38,3 +38,12 @@ $("checkText").addEventListener("click", () => {
   if (text.length < 10) { $("msg").textContent = "Вставьте ответ ИИ (от 10 символов)."; return; }
   open(text);
 });
+
+
+// класс для режима учителя: проверки из ChatGPT/Gemini попадут в панель учителя
+chrome.storage.sync.get({ classCode: "", student: "" }, ({ classCode, student }) => {
+  $("classCode").value = classCode; $("student").value = student;
+});
+$("classCode").addEventListener("change", () =>
+  chrome.storage.sync.set({ classCode: $("classCode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "") }));
+$("student").addEventListener("change", () => chrome.storage.sync.set({ student: $("student").value.trim() }));

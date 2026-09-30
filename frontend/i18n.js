@@ -1,6 +1,8 @@
 // Тексты интерфейса на трёх языках. Ключи одинаковые во всех языках.
 window.I18N = {
   kk: {
+    navCheck: "Тексеру", navTrainer: "Жаттықтырғыш", navRating: "ЖИ рейтингі", navTeacher: "Мұғалімге", sourceLabel: "Бұл кімнің жауабы?", sourceUnknown: "Білмеймін", sourceOther: "Басқа ЖИ",
+    classIn: "Сынып", classLeave: "Шығу", classNameLabel: "Атыңыз (мұғалім көреді)", classPrivacy: "Бұл сыныптағы тексерулеріңізді мұғалім көреді.", classJoin: "Сынып коды (мұғалімнен)", classJoinBtn: "Кіру", classJoinLink: "Сыныпқа кіру", teacherLink: "Мұғалімге", classNotFound: "Мұндай код табылмады — мұғалімнен тексеріңіз.", classNeedName: "Алдымен атыңызды жазыңыз — мұғалім көруі үшін.",
     howTitle: "Senim қалай жұмыс істейді", how1t: "Тұжырымдарға бөледі", how1: "ЖИ жауабы жеке фактілерге бөлінеді.",
     how2t: "Дереккөздерден тексереді", how2: "Уикипедия (kk/ru/en), оқу базасы және DOI тізілімі.",
     how3t: "Түсіндіреді", how3: "Әр тұжырымға түс, себеп және дереккөздегі дәйексөз.",
@@ -79,6 +81,8 @@ window.I18N = {
     kbSource: "Senim оқу базасы",
   },
   ru: {
+    navCheck: "Проверка", navTrainer: "Тренажёр", navRating: "Рейтинг ИИ", navTeacher: "Учителю", sourceLabel: "Чей это ответ?", sourceUnknown: "Не знаю", sourceOther: "Другой ИИ",
+    classIn: "Класс", classLeave: "Выйти", classNameLabel: "Ваше имя (увидит учитель)", classPrivacy: "Проверки в этом классе увидит учитель.", classJoin: "Код класса (у учителя)", classJoinBtn: "Войти", classJoinLink: "Войти в класс", teacherLink: "Для учителя", classNotFound: "Такой код не найден — уточните у учителя.", classNeedName: "Сначала впишите имя — чтобы учитель видел, чья проверка.",
     howTitle: "Как работает Senim", how1t: "Разбивает на утверждения", how1: "Ответ ИИ делится на отдельные факты.",
     how2t: "Сверяет с источниками", how2: "Википедия (kk/ru/en), учебная база и реестр DOI.",
     how3t: "Объясняет", how3: "Для каждого утверждения — цвет, причина и цитата из источника.",
@@ -157,6 +161,8 @@ window.I18N = {
     kbSource: "Учебная база Senim",
   },
   en: {
+    navCheck: "Check", navTrainer: "Trainer", navRating: "AI rating", navTeacher: "Teachers", sourceLabel: "Which AI wrote it?", sourceUnknown: "Not sure", sourceOther: "Other AI",
+    classIn: "Class", classLeave: "Leave", classNameLabel: "Your name (visible to the teacher)", classPrivacy: "Your teacher will see checks made in this class.", classJoin: "Class code (from your teacher)", classJoinBtn: "Join", classJoinLink: "Join a class", teacherLink: "For teachers", classNotFound: "Code not found — ask your teacher.", classNeedName: "Enter your name first so the teacher knows whose check it is.",
     howTitle: "How Senim works", how1t: "Splits into claims", how1: "The AI answer is split into separate facts.",
     how2t: "Checks sources", how2: "Wikipedia (kk/ru/en), a study base and the DOI registry.",
     how3t: "Explains", how3: "Each claim gets a color, a reason and a quote from the source.",

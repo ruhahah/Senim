@@ -127,6 +127,9 @@ class CheckRequest(BaseModel):
     text: str = Field(..., min_length=10, max_length=12000)
     ui_lang: Optional[Lang] = None
     question: str = ""                   # исходный вопрос к ИИ (необязательно)
+    class_code: str = Field("", max_length=12)   # код класса (режим учителя), необязательно
+    student: str = Field("", max_length=60)      # имя ученика, которое он ввёл сам
+    source_ai: str = Field("", max_length=20)    # чей это ответ: chatgpt, gemini… (для рейтинга ИИ)
 
 
 class CitationsRequest(BaseModel):
@@ -138,3 +141,30 @@ class FeedbackRequest(BaseModel):
     would_notice: Optional[Literal["yes", "no", "unsure"]] = None
     lang: Optional[Lang] = None
     channel: Literal["web", "extension", "telegram"] = "web"
+
+
+class ClassCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=60)
+
+
+class ThinkResultRequest(BaseModel):
+    student: str = Field("", max_length=60)
+    caught: int = Field(0, ge=0, le=100)
+    missed: int = Field(0, ge=0, le=100)
+    false_alarms: int = Field(0, ge=0, le=100)
+
+
+class TrainerNewRequest(BaseModel):
+    lang: Literal["kk", "ru", "en"] = "ru"
+    topic: str = Field("", max_length=80)
+    n_errors: int = Field(2, ge=1, le=3)
+
+
+class TrainerClassRequest(TrainerNewRequest):
+    key: str = Field(..., max_length=64)
+
+
+class TrainerAnswerRequest(BaseModel):
+    student: str = Field("", max_length=60)
+    marked: list[int] = Field(default_factory=list, max_length=20)
+    seconds: int = Field(0, ge=0, le=3600)

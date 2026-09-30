@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Senim — рейтинг ИИ по достоверности</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%2314532d'/><path d='M30 52l13 13 27-30' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="stylesheet" href="/static/styles.css?v=5">
+  <style>
+    .r-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
+    .hero h1 { font-size: 30px; margin: 0 0 6px; }
+    .callout { background: var(--yellow-bg); color: var(--yellow); border-radius: 12px; padding: 14px 16px; font-weight: 600; font-size: 16px; }
+    table.rt { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.rt th, table.rt td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    table.rt th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .rank { font-weight: 800; font-size: 18px; color: var(--muted); width: 32px; }
+    .rank.top { color: var(--green); }
+    .model { font-weight: 700; }
+    .bar { position: relative; height: 10px; background: var(--gray-bg); border-radius: 99px; min-width: 120px; }
+    .bar div { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: var(--green); }
+    .pct { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .langs span { display: inline-block; min-width: 46px; font-variant-numeric: tabular-nums; }
+    .few { color: var(--muted); font-style: italic; }
+    .method li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" style="text-decoration:none;color:inherit">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44"/><path d="M30 52l13 13 27-30"/></svg></div>
+    <div><div class="brand-name">Senim</div><div class="brand-tag" data-t="tag"></div></div>
+  </a>
+  <div class="top-right">
+    <nav class="nav"><a href="/" data-t="navCheck"></a><a href="/trainer" data-t="navTrainer"></a><a href="/rating" class="on" data-t="navRating"></a><a href="/teacher" data-t="navTeacher"></a></nav>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button data-lang="kk">ҚАЗ</button><button data-lang="ru">РУС</button><button data-lang="en">ENG</button>
+    </div>
+  </div>
+</header>
+
+<main class="r-wrap">
+  <section class="card hero">
+    <h1 data-t="title"></h1>
+    <p class="muted" data-t="sub"></p>
+    <div id="callout" class="callout hidden"></div>
+  </section>
+
+  <section class="card">
+    <h3 data-t="labTitle"></h3>
+    <p class="small muted" id="labMeta"></p>
+    <div id="labBody"></div>
+  </section>
+
+  <section class="card">
+    <h3 data-t="liveTitle"></h3>
+    <p class="small muted" data-t="liveSub"></p>
+    <div id="liveBody"></div>
+    <p style="margin-top:12px"><a class="btn btn-primary" href="/" data-t="liveCta" style="text-decoration:none;display:inline-block"></a></p>
+  </section>
+
+  <section class="card method">
+    <h3 data-t="methodTitle"></h3>
+    <ul class="small">
+      <li data-t="m1"></li><li data-t="m2"></li><li data-t="m3"></li><li data-t="m4"></li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const T = {
+    ru: {
+      tag: "Рейтинг ИИ", navCheck: "Проверка", navTrainer: "Тренажёр", navRating: "Рейтинг ИИ", navTeacher: "Учителю",
+      title: "Какой ИИ чаще ошибается?", sub: "Мы задаём разным ИИ одинаковые школьные вопросы на казахском, русском и английском, а Senim проверяет каждый ответ по источникам.",
+      labTitle: "Лабораторный тест", labEmpty: "Исследование идёт — результаты появятся здесь.",
+      labMeta: (d, n, j) => `Обновлено ${d} · ${n} вопросов · судья: ${j}`,
+      thAi: "ИИ", thRel: "Достоверность", thErr: "Ошибок на 100 утверждений", thFab: "Выдуманные ссылки", thLang: "kk / ru / en",
+      liveTitle: "По реальным проверкам пользователей", liveSub: "Когда вы проверяете ответ в Senim и указываете, чей он, он попадает сюда.",
+      liveEmpty: "Пока мало данных — проверьте ответ ИИ и укажите, чей он.", liveCta: "Проверить ответ ИИ",
+      few: (n) => `мало данных (${n})`, checks: "проверок",
+      kkWorse: (x) => `На казахском ИИ ошибаются в ${x} раза чаще, чем на русском.`,
+      kkSame: "На казахском и русском ИИ ошибаются примерно одинаково.",
+      methodTitle: "Как считаем",
+      m1: "Достоверность — доля утверждений ИИ, которые подтвердились по источнику, среди всех проверенных.",
+      m2: "Ошибки — опровергнутые утверждения и выдуманные научные ссылки (DOI не существует) на 100 утверждений.",
+      m3: "Вердикт выносится только по найденному источнику, а цитату, на которую он опирается, проверяет программа, а не ИИ.",
+      m4: "Выборка пока небольшая и школьная: это ориентир, а не окончательная оценка моделей.",
+    },
+    kk: {
+      tag: "ЖИ рейтингі", navCheck: "Тексеру", navTrainer: "Жаттықтырғыш", navRating: "ЖИ рейтингі", navTeacher: "Мұғалімге",
+      title: "Қай ЖИ жиі қателеседі?", sub: "Әр түрлі ЖИ-ге қазақ, орыс және ағылшын тілінде бірдей мектеп сұрақтарын қоямыз, ал Senim әр жауапты дереккөздер бойынша тексереді.",
+      labTitle: "Зертханалық сынақ", labEmpty: "Зерттеу жүріп жатыр — нәтижелер осында шығады.",
+      labMeta: (d, n, j) => `Жаңартылды ${d} · ${n} сұрақ · төреші: ${j}`,
+      thAi: "ЖИ", thRel: "Сенімділік", thErr: "100 тұжырымға қате", thFab: "Ойдан шығарылған сілтемелер", thLang: "kk / ru / en",
+      liveTitle: "Пайдаланушылардың нақты тексерулері бойынша", liveSub: "Senim-де жауапты тексеріп, оның кімдікі екенін көрсетсеңіз, ол осында түседі.",
+      liveEmpty: "Әзірге дерек аз — ЖИ жауабын тексеріп, кімдікі екенін көрсетіңіз.", liveCta: "ЖИ жауабын тексеру",
+      few: (n) => `дерек аз (${n})`, checks: "тексеру",
+      kkWorse: (x) => `Қазақ тілінде ЖИ орыс тіліне қарағанда ${x} есе жиі қателеседі.`,
+      kkSame: "Қазақ және орыс тілдерінде ЖИ шамамен бірдей қателеседі.",
+      methodTitle: "Қалай есептейміз",
+      m1: "Сенімділік — тексерілген тұжырымдардың ішінде дереккөзбен расталғандарының үлесі.",
+      m2: "Қателер — жоққа шығарылған тұжырымдар мен ойдан шығарылған ғылыми сілтемелер (DOI жоқ), 100 тұжырымға шаққанда.",
+      m3: "Үкім тек табылған дереккөз бойынша шығарылады, ал дәйексөзді ЖИ емес, бағдарлама тексереді.",
+      m4: "Іріктеме әзірге шағын әрі мектеп тақырыптарына арналған: бұл бағдар ғана.",
+    },
+    en: {
+      tag: "AI rating", navCheck: "Check", navTrainer: "Trainer", navRating: "AI rating", navTeacher: "Teachers",
+      title: "Which AI gets things wrong more often?", sub: "We ask different AIs the same school questions in Kazakh, Russian and English, and Senim checks every answer against sources.",
+      labTitle: "Lab test", labEmpty: "Research in progress — results will appear here.",
+      labMeta: (d, n, j) => `Updated ${d} · ${n} questions · judge: ${j}`,
+      thAi: "AI", thRel: "Reliability", thErr: "Errors per 100 claims", thFab: "Fabricated references", thLang: "kk / ru / en",
+      liveTitle: "From real user checks", liveSub: "When you check an answer in Senim and say which AI wrote it, it counts here.",
+      liveEmpty: "Not enough data yet — check an AI answer and tell us which AI it came from.", liveCta: "Check an AI answer",
+      few: (n) => `not enough data (${n})`, checks: "checks",
+      kkWorse: (x) => `In Kazakh, AIs make mistakes ${x}× more often than in Russian.`,
+      kkSame: "AIs make about as many mistakes in Kazakh as in Russian.",
+      methodTitle: "How we measure",
+      m1: "Reliability — the share of the AI's claims confirmed by a source, among all checked claims.",
+      m2: "Errors — refuted claims plus fabricated scholarly references (non-existent DOI) per 100 claims.",
+      m3: "A verdict is given only from a found source, and the quote it relies on is verified by code, not by AI.",
+      m4: "The sample is still small and school-focused: a guide, not a final judgement of the models.",
+    },
+  };
+  const $ = (id) => document.getElementById(id);
+  let lang = (() => { try { return localStorage.getItem("senim.lang") || "ru"; } catch { return "ru"; } })();
+  const tt = (k) => (T[lang] || T.ru)[k];
+  let data = null;
+
+  function el(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) { if (k === "class") e.className = v; else if (k === "style") e.style.cssText = v; else e.setAttribute(k, v); }
+    for (const k of kids) e.append(k instanceof Node ? k : document.createTextNode(k == null ? "" : String(k)));
+    return e;
+  }
+  const pct = (x) => (x == null ? "–" : Math.round(x * 100) + "%");
+  const bar = (x) => el("div", { class: "bar" }, el("div", { style: `width:${Math.round((x || 0) * 100)}%` }));
+
+  function table(models, live) {
+    const head = el("tr", {}, el("th", {}, "#"), el("th", {}, tt("thAi")), el("th", {}, tt("thRel")), el("th", {}, ""),
+      el("th", {}, tt("thErr")), el("th", {}, live ? tt("checks") : tt("thFab")), el("th", {}, tt("thLang")));
+    let rank = 0;
+    const rows = models.map((m) => {
+      const t = live ? m : m.total;
+      const few = live && m.checks < data.live.min_checks;
+      if (!few) rank += 1;
+      const bl = m.by_lang || {};
+      return el("tr", {},
+        el("td", { class: "rank" + (rank === 1 && !few ? " top" : "") }, few ? "" : rank),
+        el("td", { class: "model" }, m.name),
+        el("td", { class: "pct" }, few ? el("span", { class: "few" }, tt("few")(m.checks)) : pct(t.reliability)),
+        el("td", {}, few ? "" : bar(t.reliability)),
+        el("td", {}, t.errors_per_100 == null ? "–" : t.errors_per_100),
+        el("td", {}, live ? m.checks : t.fabricated_citations),
+        el("td", { class: "langs small" }, ...["kk", "ru", "en"].map((lg) => el("span", {}, bl[lg] ? pct(bl[lg].reliability) : "–"))));
+    });
+    return el("div", { style: "overflow-x:auto" }, el("table", { class: "rt" }, el("thead", {}, head), el("tbody", {}, ...rows)));
+  }
+
+  function kkCallout(models) {
+    let kk = 0, ru = 0, n = 0;
+    for (const m of models) {
+      const a = (m.by_lang || {}).kk, b = (m.by_lang || {}).ru;
+      if (a && b && a.errors_per_100 != null && b.errors_per_100 != null) { kk += a.errors_per_100; ru += b.errors_per_100; n += 1; }
+    }
+    if (!n) return "";
+    if (ru === 0) return kk > 0 ? tt("kkWorse")("∞") : tt("kkSame");
+    const x = kk / ru;
+    return x >= 1.2 ? tt("kkWorse")(x.toFixed(1).replace(".", lang === "en" ? "." : ",")) : tt("kkSame");
+  }
+
+  function render() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-t]").forEach((e) => { const v = tt(e.dataset.t); if (typeof v === "string") e.textContent = v; });
+    document.querySelectorAll(".lang-switch button").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
+    if (!data) return;
+    const lab = data.lab;
+    if (lab && lab.models && lab.models.length) {
+      $("labMeta").textContent = tt("labMeta")(lab.generated, lab.questions, lab.judge);
+      $("labBody").replaceChildren(table(lab.models, false));
+      const c = kkCallout(lab.models);
+      $("callout").textContent = c; $("callout").classList.toggle("hidden", !c);
+    } else {
+      $("labMeta").textContent = "";
+      $("labBody").replaceChildren(el("p", { class: "muted" }, tt("labEmpty")));
+      $("callout").classList.add("hidden");
+    }
+    const live = data.live.models || [];
+    $("liveBody").replaceChildren(live.length ? table(live, true) : el("p", { class: "muted" }, tt("liveEmpty")));
+  }
+
+  document.querySelectorAll(".lang-switch button").forEach((b) => b.addEventListener("click", () => {
+    lang = b.dataset.lang; try { localStorage.setItem("senim.lang", lang); } catch {} render();
+  }));
+  render();
+  fetch("/api/rating").then((r) => r.json()).then((d) => { data = d; render(); }).catch(() => {});
+})();
+</script>
+</body>
+</html>

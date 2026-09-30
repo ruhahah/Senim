@@ -14,7 +14,7 @@ import logging
 
 import httpx
 
-from . import ratelimit, stats
+from . import classroom, ratelimit, stats
 from .config import get_settings
 from .pipeline.orchestrator import run_check_full
 from .pipeline.text_utils import detect_lang
@@ -32,6 +32,11 @@ T = {
         "ref": {"verified": "✅ бар", "mismatch": "🟡 бар, бірақ бұрмаланған", "doi_not_found": "❌ DOI жоқ — ойдан шығарылған",
                 "not_found": "⚪ базалардан табылмады", "error": "⚪ тексеру мүмкін болмады"},
         "more": "Толық талдау", "fail": "Кешіріңіз, тексеру сәтсіз аяқталды. Кейінірек қайталап көріңіз.",
+        "class_ok": "✅ Сіз «{name}» сыныбындасыз ({student}). Енді тексерулеріңізді мұғалім көреді. Шығу: /leave",
+        "class_bad": "Сынып табылмады. Мұғалімнен кодты сұраңыз. Мысалы: /class ABC234 Айгерім",
+        "class_left": "Сыныптан шықтыңыз.",
+        "class_help": "Сыныпқа қосылу: /class КОД Атыңыз",
+        "in_class": "📚 Сынып: {name}",
         "fb_useful": "Көмектесті ме?", "fb_notice": "Қатені өзіңіз байқар ма едіңіз?", "yes": "Иә", "no": "Жоқ", "thanks": "Рақмет!",
     },
     "ru": {
@@ -43,6 +48,11 @@ T = {
         "ref": {"verified": "✅ существует", "mismatch": "🟡 существует, но искажена", "doi_not_found": "❌ DOI не существует — выдумка",
                 "not_found": "⚪ нет в научных базах", "error": "⚪ не удалось проверить"},
         "more": "Полный разбор", "fail": "Извините, проверка не удалась. Попробуйте чуть позже.",
+        "class_ok": "✅ Вы в классе «{name}» ({student}). Теперь ваши проверки увидит учитель. Выйти: /leave",
+        "class_bad": "Класс не найден. Попросите код у учителя. Пример: /class ABC234 Айгерим",
+        "class_left": "Вы вышли из класса.",
+        "class_help": "Войти в класс: /class КОД Имя",
+        "in_class": "📚 Класс: {name}",
         "fb_useful": "Помогло?", "fb_notice": "Заметили бы ошибку сами?", "yes": "Да", "no": "Нет", "thanks": "Спасибо!",
     },
     "en": {
@@ -54,6 +64,11 @@ T = {
         "ref": {"verified": "✅ exists", "mismatch": "🟡 exists, but distorted", "doi_not_found": "❌ DOI doesn't exist — fabricated",
                 "not_found": "⚪ not in databases", "error": "⚪ couldn't check"},
         "more": "Full report", "fail": "Sorry, the check failed. Please try again later.",
+        "class_ok": "✅ You joined class “{name}” ({student}). Your teacher will see your checks. Leave: /leave",
+        "class_bad": "Class not found. Ask your teacher for the code. Example: /class ABC234 Aigerim",
+        "class_left": "You left the class.",
+        "class_help": "Join a class: /class CODE Name",
+        "in_class": "📚 Class: {name}",
         "fb_useful": "Helpful?", "fb_notice": "Would you have noticed?", "yes": "Yes", "no": "No", "thanks": "Thanks!",
     },
 }
@@ -130,20 +145,47 @@ class Bot:
             "en" if (msg.get("from") or {}).get("language_code") == "en" else "ru")
         t = T[lang]
         if not text or text.startswith("/start") or text.startswith("/help"):
-            await self.call("sendMessage", chat_id=chat, text=t["start"], parse_mode="HTML")
+            # ссылка вида t.me/bot?start=class_ABC234 сразу приглашает в класс
+            arg = text.split(maxsplit=1)[1] if text.startswith("/start ") else ""
+            if arg.lower().startswith("class_"):
+                name = ((msg.get("from") or {}).get("first_name") or "")
+                await self._join(chat, t, arg[6:], name)
+                return
+            await self.call("sendMessage", chat_id=chat, text=t["start"] + "\n\n" + t["class_help"], parse_mode="HTML")
+            return
+        if text.startswith("/class"):
+            parts = text.split(maxsplit=2)
+            if len(parts) < 2:
+                await self.call("sendMessage", chat_id=chat, text=t["class_help"])
+                return
+            name = parts[2] if len(parts) > 2 else ((msg.get("from") or {}).get("first_name") or "")
+            await self._join(chat, t, parts[1], name)
+            return
+        if text.startswith("/leave"):
+            classroom.tg_leave(chat)
+            await self.call("sendMessage", chat_id=chat, text=t["class_left"])
             return
         if len(text) < 10:
             await self.call("sendMessage", chat_id=chat, text=t["short"])
             return
+        member = None
         try:
-            ratelimit.check_and_count(f"tg:{chat}")
+            member = classroom.tg_membership(chat)
+        except Exception as e:  # noqa: BLE001
+            log.warning("class lookup failed: %s", e)
+        code, student = member if member else ("", "")
+        try:
+            if code:
+                ratelimit.check_and_count_class(code, student)
+            else:
+                ratelimit.check_and_count(f"tg:{chat}")
         except ratelimit.RateLimited as e:
             await self.call("sendMessage", chat_id=chat, text=e.message(lang))
             return
         wait = await self.call("sendMessage", chat_id=chat, text=t["wait"], reply_to_message_id=msg["message_id"])
         async with self.sem:
             try:
-                out = await run_check_full(text[:12000], channel="telegram")
+                out = await run_check_full(text[:12000], channel="telegram", class_code=code, student=student)
                 report = format_report(out, lang)
             except Exception as e:  # noqa: BLE001
                 log.exception("check failed: %s", e)
@@ -156,6 +198,18 @@ class Bot:
         else:
             await self.call("sendMessage", chat_id=chat, text=report, parse_mode="HTML",
                             disable_web_page_preview=True, **extra)
+
+    async def _join(self, chat, t: dict, code: str, name: str):
+        cls = None
+        try:
+            cls = classroom.tg_join(chat, code, name)
+        except Exception as e:  # noqa: BLE001
+            log.warning("class join failed: %s", e)
+        if cls:
+            await self.call("sendMessage", chat_id=chat,
+                            text=t["class_ok"].format(name=esc(cls["name"]), student=esc(classroom.clean_student(name))))
+        else:
+            await self.call("sendMessage", chat_id=chat, text=t["class_bad"])
 
     async def handle_callback(self, cq: dict):
         """Кнопки мини-опроса под разбором: записываем ответ и убираем отвеченный ряд."""

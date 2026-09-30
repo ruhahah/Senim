@@ -245,3 +245,20 @@ a.chip { text-decoration: none; }
 .fb-btns { display: flex; gap: 6px; }
 .fb-btns .chip.on { border-color: var(--brand-2); background: var(--green-bg); color: var(--green); }
 .fb-btns.done .chip:not(.on) { opacity: .45; }
+
+/* ---------- режим учителя: плашка класса ---------- */
+.class-bar { background: var(--green-bg); border-radius: 12px; padding: 10px 12px 12px; margin-bottom: 14px; }
+.class-bar .field-label { margin-top: 8px; }
+.class-bar .row.gap input { flex: 1; text-transform: uppercase; letter-spacing: .1em; }
+.class-name { font-size: 14px; }
+.linklike { background: none; border: 0; padding: 0; color: var(--blue); cursor: pointer; font: inherit; text-decoration: underline; }
+.foot-links { margin-top: 6px; }
+
+/* ---------- навигация между разделами ---------- */
+.nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav a { font-size: 13px; padding: 6px 10px; border-radius: 8px; color: var(--muted); text-decoration: none; font-weight: 600; }
+.nav a:hover { background: var(--gray-bg); color: inherit; }
+.nav a.on { background: var(--green-bg); color: var(--green); }
+.source-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.source-row select { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: inherit; }
+@media (max-width: 720px) { .nav a { padding: 4px 6px; } }

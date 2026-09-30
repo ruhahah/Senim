@@ -1,0 +1,24 @@
+/* Senim внутри ChatGPT / Gemini */
+::highlight(senim-contradicted) { background-color: rgba(240, 104, 92, .38); text-decoration: underline wavy #d8483c; }
+::highlight(senim-disputed) { background-color: rgba(242, 196, 107, .40); }
+::highlight(senim-supported) { background-color: rgba(61, 187, 116, .22); }
+
+.senim-ui { margin: 8px 0 14px; font: 14px/1.45 system-ui, "Segoe UI", Arial, sans-serif; color: inherit; }
+.senim-ui .senim-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(61,187,116,.55);
+  background: rgba(61,187,116,.10); color: inherit; border-radius: 999px; padding: 6px 12px; cursor: pointer; font: inherit; font-weight: 600; }
+.senim-ui .senim-btn:hover { background: rgba(61,187,116,.2); }
+.senim-ui .senim-dot { width: 10px; height: 10px; border-radius: 50%; background: #3DBB74; display: inline-block; }
+.senim-ui .senim-wait { display: flex; align-items: center; gap: 8px; opacity: .8; }
+.senim-ui .senim-spin { width: 14px; height: 14px; border: 2px solid rgba(127,127,127,.35); border-top-color: #3DBB74; border-radius: 50%;
+  animation: senim-spin .8s linear infinite; display: inline-block; }
+@keyframes senim-spin { to { transform: rotate(360deg); } }
+.senim-ui .senim-head { display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 8px 12px; margin-bottom: 8px; background: rgba(127,127,127,.12); }
+.senim-ui .senim-head b { font-size: 22px; }
+.senim-ui .band-high b { color: #3DBB74; } .senim-ui .band-medium b { color: #E5A93A; } .senim-ui .band-low b { color: #F0685C; }
+.senim-ui .senim-item { border-left: 4px solid #F0685C; padding: 6px 10px; margin: 6px 0; border-radius: 0 8px 8px 0; background: rgba(240,104,92,.08); }
+.senim-ui .senim-item.s-disputed { border-left-color: #E5A93A; background: rgba(229,169,58,.08); }
+.senim-ui .senim-claim { font-weight: 600; }
+.senim-ui .senim-why { opacity: .85; font-size: 13px; margin-top: 2px; }
+.senim-ui .senim-ok { color: #3DBB74; font-weight: 600; }
+.senim-ui .senim-err { color: #F0685C; margin-bottom: 6px; }
+.senim-ui .senim-link { display: inline-block; margin-top: 6px; color: #3DBB74; font-weight: 600; text-decoration: none; }

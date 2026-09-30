@@ -409,6 +409,13 @@
     box.replaceChildren(...parts);
     box.classList.remove("hidden");
     $("btnReveal").disabled = true;
+    if (state.cls && !state.demo) {  // итог «Сначала подумай» — в панель учителя
+      fetch(`/api/class/${state.cls.code}/think`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student: $("studentName").value.trim(), caught: found,
+                               missed: problems.length - found, false_alarms: falseAlarms }),
+      }).catch(() => {});
+    }
     if (problems.length) {
       const f = Number(loadPref("senim.skill.found", "0")) + found;
       const tot = Number(loadPref("senim.skill.total", "0")) + problems.length;
@@ -435,8 +442,14 @@
     state.textSource = $("answer").value;
     // смещения предложений считаются по тексту после trim на сервере — используем тот же текст
     state.textSource = text;
-    streamFrom(`/api/check/stream?channel=${encodeURIComponent(state.channel)}`,
-      { text, question: $("question").value.trim(), ui_lang: state.lang });
+    const body = { text, question: $("question").value.trim(), ui_lang: state.lang, source_ai: $("sourceAi").value };
+    if (state.cls) {
+      const name = $("studentName").value.trim();
+      if (!name) { notice(t("classNeedName"), "warn"); $("studentName").focus(); return; }
+      body.class_code = state.cls.code;
+      body.student = name;
+    }
+    streamFrom(`/api/check/stream?channel=${encodeURIComponent(state.channel)}`, body);
   }
 
   async function checkCitationsOnly() {
@@ -527,6 +540,47 @@
   // /?text=...&src=extension — текст пришёл из расширения Chrome: сразу проверяем
   const params = new URLSearchParams(location.search);
   state.channel = ["extension", "telegram"].includes(params.get("src")) ? params.get("src") : "web";
+
+  // ---------------------------------------------------------- режим учителя (класс по коду)
+  function showClass() {
+    const c = state.cls;
+    show("classBar", !!c);
+    if (c) { $("className").textContent = c.name; show("classJoin", false); }
+  }
+  async function joinClass(code, silent) {
+    code = (code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!code) return false;
+    try {
+      const res = await fetch(`/api/class/${code}`);
+      if (!res.ok) throw new Error("404");
+      const c = await res.json();
+      state.cls = { code: c.code, name: c.name };
+      savePref("senim.class", JSON.stringify(state.cls));
+      showClass();
+      if (!$("studentName").value) $("studentName").focus();
+      return true;
+    } catch {
+      if (!silent) notice(t("classNotFound"), "warn");
+      return false;
+    }
+  }
+  try { state.cls = JSON.parse(loadPref("senim.class", "null")); } catch { state.cls = null; }
+  $("studentName").value = loadPref("senim.student", "");
+  $("studentName").addEventListener("change", () => savePref("senim.student", $("studentName").value.trim()));
+  $("btnClassLeave").addEventListener("click", () => {
+    state.cls = null; savePref("senim.class", "null"); showClass();
+  });
+  $("btnShowJoin").addEventListener("click", () => { show("classJoin", true); $("classCode").focus(); });
+  $("btnClassJoin").addEventListener("click", () => joinClass($("classCode").value));
+  $("classCode").addEventListener("keydown", (e) => { if (e.key === "Enter") joinClass($("classCode").value); });
+  showClass();
+  // чей ответ проверяем — запоминаем выбор; из расширения приходит автоматически (?ai=chatgpt)
+  $("sourceAi").value = params.get("ai") || loadPref("senim.sourceAi", "");
+  $("sourceAi").addEventListener("change", () => savePref("senim.sourceAi", $("sourceAi").value));
+  if (params.get("class")) {
+    joinClass(params.get("class"));
+    if (!params.get("text")) history.replaceState(null, "", location.pathname);
+  }
 
   applyI18n();
   loadExamples();

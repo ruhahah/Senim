@@ -4,13 +4,14 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import cache, ratelimit, stats
+from . import cache, classroom, ratelimit, stats, trainer
 from . import telegram as tg
 from .config import ROOT_DIR, get_settings
 from .llm import get_router
@@ -19,7 +20,8 @@ from .pipeline import nli
 from .pipeline.orchestrator import run_check, run_check_full
 from .pipeline.search import http_client
 from .pipeline.text_utils import split_sentences
-from .schemas import CheckRequest, CitationsRequest, FeedbackRequest
+from .schemas import (CheckRequest, CitationsRequest, ClassCreateRequest, FeedbackRequest,
+                      ThinkResultRequest, TrainerAnswerRequest, TrainerClassRequest, TrainerNewRequest)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
@@ -33,7 +35,7 @@ async def no_stale_cache(request, call_next):
     сайта никто не увидит смесь старых и новых файлов."""
     response = await call_next(request)
     path = request.url.path
-    if path == "/" or path.startswith("/static/"):
+    if path in ("/", "/teacher", "/rating", "/trainer") or path.startswith("/static/"):
         response.headers["Cache-Control"] = "no-cache"
     return response
 
@@ -42,13 +44,17 @@ EXTENSION = ROOT_DIR / "extension"
 DATA = ROOT_DIR / "data"
 
 
-def _guard(request: Request, lang: str | None) -> JSONResponse | None:
-    """Лимит платных проверок. С этого компьютера (localhost) — без ограничений."""
+def _guard(request: Request, lang: str | None, class_code: str = "", student: str = "") -> JSONResponse | None:
+    """Лимит платных проверок. С этого компьютера (localhost) — без ограничений.
+    Ученики класса считаются по классу и имени (весь класс может сидеть за одним IP школы)."""
     key = ratelimit.client_key(request)
     if ratelimit.is_local(key):
         return None
     try:
-        ratelimit.check_and_count(key)
+        if class_code and classroom.get_class(class_code):
+            ratelimit.check_and_count_class(classroom.normalize_code(class_code), classroom.clean_student(student))
+        else:
+            ratelimit.check_and_count(key)
     except ratelimit.RateLimited as e:
         return JSONResponse(status_code=429, headers={"Retry-After": str(e.retry_after)},
                             content={"detail": {"code": f"rate_limit_{e.kind}", "message": e.message(lang or "ru")}})
@@ -120,24 +126,175 @@ async def health():
     }
 
 
+def _class_of(req: CheckRequest) -> str:
+    code = classroom.normalize_code(req.class_code)
+    return code if code and classroom.get_class(code) else ""
+
+
 @app.post("/api/check")
-async def check(req: CheckRequest, request: Request):
-    if (blocked := _guard(request, req.ui_lang.value if req.ui_lang else None)):
+async def check(req: CheckRequest, request: Request, channel: str = "api"):
+    code = _class_of(req)
+    if (blocked := _guard(request, req.ui_lang.value if req.ui_lang else None, code, req.student)):
         return blocked
-    return await run_check_full(req.text, req.question, req.ui_lang.value if req.ui_lang else None, channel="api")
+    return await run_check_full(req.text, req.question, req.ui_lang.value if req.ui_lang else None,
+                                channel=channel if channel in ("api", "extension", "telegram", "web") else "api", class_code=code, student=req.student,
+                                source_ai=req.source_ai)
 
 
 @app.post("/api/check/stream")
 async def check_stream(req: CheckRequest, request: Request, channel: str = "web"):
-    if (blocked := _guard(request, req.ui_lang.value if req.ui_lang else None)):
+    code = _class_of(req)
+    if (blocked := _guard(request, req.ui_lang.value if req.ui_lang else None, code, req.student)):
         return blocked
     channel = channel if channel in ("web", "extension", "telegram") else "web"
 
     async def gen():
-        async for ev in run_check(req.text, req.question, req.ui_lang.value if req.ui_lang else None, channel):
+        async for ev in run_check(req.text, req.question, req.ui_lang.value if req.ui_lang else None, channel,
+                                  code, req.student, req.source_ai):
             yield json.dumps(ev, ensure_ascii=False) + "\n"
 
     return StreamingResponse(gen(), media_type="application/x-ndjson")
+
+
+# ---------------------------------------------------------------- режим учителя
+@app.post("/api/class")
+async def class_create(req: ClassCreateRequest, request: Request):
+    """Учитель создаёт класс: код для учеников + секретный ключ для панели."""
+    if not ratelimit.hit("class_create:" + ratelimit.client_key(request), 10):
+        raise HTTPException(429, "Слишком много новых классов за час")
+    c = classroom.create_class(req.name)
+    return {**c, "join_path": f"/?class={c['code']}", "dashboard_path": f"/teacher?code={c['code']}&key={c['key']}"}
+
+
+@app.get("/api/class/{code}")
+async def class_info(code: str):
+    c = classroom.get_class(code)
+    if not c:
+        raise HTTPException(404, "class not found")
+    return {"code": c["code"], "name": c["name"]}
+
+
+@app.get("/api/class/{code}/dashboard")
+async def class_dashboard(code: str, key: str = ""):
+    c = classroom.get_class(code)
+    if not c:
+        raise HTTPException(404, "class not found")
+    if not classroom.check_key(c, key):
+        raise HTTPException(403, "wrong key")
+    return {"class": {"code": c["code"], "name": c["name"], "created": c["created"]}, **classroom.dashboard(c["code"]),
+            "trainer": trainer.class_rounds(c["code"])}
+
+
+@app.post("/api/class/{code}/think")
+async def class_think(code: str, req: ThinkResultRequest):
+    if not classroom.record_think(code, req.student, req.caught, req.missed, req.false_alarms):
+        raise HTTPException(404, "class not found")
+    return {"ok": True}
+
+
+@app.get("/api/qr.svg")
+async def qr_svg(text: str):
+    """QR-код (SVG) для ссылки-приглашения в класс — показывается на доске/проекторе."""
+    import io
+
+    import qrcode
+    import qrcode.image.svg
+    from fastapi.responses import Response
+
+    if len(text) > 300:
+        raise HTTPException(400, "too long")
+    img = qrcode.make(text, image_factory=qrcode.image.svg.SvgPathImage, border=2)
+    buf = io.BytesIO()
+    img.save(buf)
+    return Response(buf.getvalue(), media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=86400"})
+
+
+# ---------------------------------------------------------------- тренажёр «Найди ложь ИИ»
+@app.post("/api/trainer/new")
+async def trainer_new(req: TrainerNewRequest, request: Request):
+    """Новый раунд для одиночной игры: сначала берём уже составленный, иначе составляем."""
+    rid = trainer.reuse_round(req.lang, req.topic)
+    if not rid:
+        if (blocked := _guard(request, req.lang)):
+            return blocked
+        try:
+            payload = await trainer.generate(req.topic, req.lang, req.n_errors)
+        except trainer.TrainerError as e:
+            raise HTTPException(503, str(e))
+        rid = trainer.save_round(payload)
+    return {"id": rid}
+
+
+@app.post("/api/class/{code}/trainer")
+async def trainer_for_class(code: str, req: TrainerClassRequest):
+    """Учитель запускает раунд для своего класса."""
+    c = classroom.get_class(code)
+    if not c:
+        raise HTTPException(404, "class not found")
+    if not classroom.check_key(c, req.key):
+        raise HTTPException(403, "wrong key")
+    if not ratelimit.hit("trainer_class:" + c["code"], 30):
+        raise HTTPException(429, "Слишком много раундов за час")
+    try:
+        payload = await trainer.generate(req.topic, req.lang, req.n_errors)
+    except trainer.TrainerError as e:
+        raise HTTPException(503, str(e))
+    rid = trainer.save_round(payload, c["code"])
+    return {"id": rid, "path": f"/trainer?r={rid}"}
+
+
+@app.get("/api/trainer/topics")
+async def trainer_topics(lang: str = "ru"):
+    from .pipeline.search import load_kb
+    return {"topics": [e["title"] for e in load_kb() if e.get("lang") == lang]}
+
+
+@app.get("/api/trainer/{rid}")
+async def trainer_get(rid: str):
+    r = trainer.load_round(rid)
+    if not r:
+        raise HTTPException(404, "round not found")
+    return trainer.public_view(r)
+
+
+@app.post("/api/trainer/{rid}/answer")
+async def trainer_answer(rid: str, req: TrainerAnswerRequest):
+    r = trainer.load_round(rid)
+    if not r:
+        raise HTTPException(404, "round not found")
+    res = trainer.score_answer(r, req.marked, req.seconds)
+    trainer.record_result(r, req.student, res, req.seconds)
+    return {**res, "leaderboard": trainer.leaderboard(rid)}
+
+
+@app.get("/api/trainer/{rid}/leaderboard")
+async def trainer_board(rid: str):
+    if not trainer.load_round(rid):
+        raise HTTPException(404, "round not found")
+    return {"leaderboard": trainer.leaderboard(rid)}
+
+
+@app.get("/trainer")
+async def trainer_page():
+    return FileResponse(FRONTEND / "trainer.html")
+
+
+@app.get("/api/rating")
+async def rating():
+    """Рейтинг ИИ по достоверности: лабораторный тест (data/ai_rating.json) + живые проверки пользователей."""
+    path = DATA / "ai_rating.json"
+    lab = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    return {"lab": lab, "live": stats.live_rating(), "sources": stats.SOURCE_AI_NAMES}
+
+
+@app.get("/rating")
+async def rating_page():
+    return FileResponse(FRONTEND / "rating.html")
+
+
+@app.get("/teacher")
+async def teacher_page():
+    return FileResponse(FRONTEND / "teacher.html")
 
 
 @app.post("/api/citations")
@@ -208,7 +365,9 @@ async def extension_zip(request: Request):
             if f.is_file():
                 data = f.read_bytes()
                 if f.suffix in (".js", ".html"):
-                    data = data.replace(b"http://127.0.0.1:8000", base.encode())
+                    # адрес сервера по умолчанию → адрес именно этого сайта
+                    data = re.sub(rb'const DEFAULT_SERVER = "[^"]*"', b'const DEFAULT_SERVER = "' + base.encode() + b'"', data)
+                    data = re.sub(rb'placeholder="https?://[^"]*"', b'placeholder="' + base.encode() + b'"', data)
                 z.writestr(f"senim-extension/{f.relative_to(EXTENSION).as_posix()}", data)
     return Response(buf.getvalue(), media_type="application/zip",
                     headers={"Content-Disposition": 'attachment; filename="senim-extension.zip"'})
