@@ -1,0 +1,173 @@
+{
+ "generated": "2026-09-30",
+ "questions": 48,
+ "judge": "openai:gpt-6-luna → gemini:gemini-3.5-flash-lite → groq:openai/gpt-oss-120b",
+ "method": "Каждому ИИ заданы одинаковые школьные вопросы на казахском, русском и английском. Каждый ответ проверил Senim: утверждения сверены с учебной базой и Википедией, цитаты проверены кодом, научные ссылки — в реестре DOI.",
+ "models": [
+  {
+   "name": "ChatGPT (gpt-6-luna)",
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "total": {
+    "answers": 48,
+    "claims": 273,
+    "supported": 178,
+    "disputed": 27,
+    "contradicted": 16,
+    "unverifiable": 52,
+    "fabricated_citations": 4,
+    "reliability": 0.805,
+    "errors_per_100": 7.3,
+    "avg_trust": 76
+   },
+   "by_lang": {
+    "kk": {
+     "answers": 16,
+     "claims": 87,
+     "supported": 61,
+     "disputed": 9,
+     "contradicted": 6,
+     "unverifiable": 11,
+     "fabricated_citations": 2,
+     "reliability": 0.803,
+     "errors_per_100": 9.2,
+     "avg_trust": 82
+    },
+    "ru": {
+     "answers": 16,
+     "claims": 95,
+     "supported": 58,
+     "disputed": 12,
+     "contradicted": 6,
+     "unverifiable": 19,
+     "fabricated_citations": 2,
+     "reliability": 0.763,
+     "errors_per_100": 8.4,
+     "avg_trust": 74
+    },
+    "en": {
+     "answers": 16,
+     "claims": 91,
+     "supported": 59,
+     "disputed": 6,
+     "contradicted": 4,
+     "unverifiable": 22,
+     "fabricated_citations": 0,
+     "reliability": 0.855,
+     "errors_per_100": 4.4,
+     "avg_trust": 72
+    }
+   }
+  },
+  {
+   "name": "Gemini (gemini-3.5-flash-lite)",
+   "provider": "gemini",
+   "model": "gemini-3.5-flash-lite",
+   "total": {
+    "answers": 48,
+    "claims": 346,
+    "supported": 179,
+    "disputed": 51,
+    "contradicted": 35,
+    "unverifiable": 81,
+    "fabricated_citations": 18,
+    "reliability": 0.675,
+    "errors_per_100": 15.3,
+    "avg_trust": 64
+   },
+   "by_lang": {
+    "kk": {
+     "answers": 16,
+     "claims": 109,
+     "supported": 67,
+     "disputed": 16,
+     "contradicted": 11,
+     "unverifiable": 15,
+     "fabricated_citations": 6,
+     "reliability": 0.713,
+     "errors_per_100": 15.6,
+     "avg_trust": 72
+    },
+    "ru": {
+     "answers": 16,
+     "claims": 130,
+     "supported": 65,
+     "disputed": 14,
+     "contradicted": 12,
+     "unverifiable": 39,
+     "fabricated_citations": 5,
+     "reliability": 0.714,
+     "errors_per_100": 13.1,
+     "avg_trust": 60
+    },
+    "en": {
+     "answers": 16,
+     "claims": 107,
+     "supported": 47,
+     "disputed": 21,
+     "contradicted": 12,
+     "unverifiable": 27,
+     "fabricated_citations": 7,
+     "reliability": 0.588,
+     "errors_per_100": 17.8,
+     "avg_trust": 58
+    }
+   }
+  },
+  {
+   "name": "Groq (gpt-oss-120b)",
+   "provider": "groq",
+   "model": "openai/gpt-oss-120b",
+   "total": {
+    "answers": 48,
+    "claims": 337,
+    "supported": 106,
+    "disputed": 58,
+    "contradicted": 63,
+    "unverifiable": 110,
+    "fabricated_citations": 12,
+    "reliability": 0.467,
+    "errors_per_100": 22.3,
+    "avg_trust": 49
+   },
+   "by_lang": {
+    "kk": {
+     "answers": 16,
+     "claims": 108,
+     "supported": 27,
+     "disputed": 16,
+     "contradicted": 24,
+     "unverifiable": 41,
+     "fabricated_citations": 4,
+     "reliability": 0.403,
+     "errors_per_100": 25.9,
+     "avg_trust": 42
+    },
+    "ru": {
+     "answers": 16,
+     "claims": 109,
+     "supported": 34,
+     "disputed": 21,
+     "contradicted": 26,
+     "unverifiable": 28,
+     "fabricated_citations": 4,
+     "reliability": 0.42,
+     "errors_per_100": 27.5,
+     "avg_trust": 49
+    },
+    "en": {
+     "answers": 16,
+     "claims": 120,
+     "supported": 45,
+     "disputed": 21,
+     "contradicted": 13,
+     "unverifiable": 41,
+     "fabricated_citations": 4,
+     "reliability": 0.57,
+     "errors_per_100": 14.2,
+     "avg_trust": 57
+    }
+   }
+  }
+ ]
+}

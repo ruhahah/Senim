@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import re
 
 from fastapi import FastAPI, HTTPException, Request
@@ -35,7 +36,7 @@ async def no_stale_cache(request, call_next):
     сайта никто не увидит смесь старых и новых файлов."""
     response = await call_next(request)
     path = request.url.path
-    if path in ("/", "/teacher", "/rating", "/trainer") or path.startswith("/static/"):
+    if path in ("/", "/teacher", "/rating", "/trainer", "/privacy") or path.startswith("/static/"):
         response.headers["Cache-Control"] = "no-cache"
     return response
 
@@ -86,6 +87,37 @@ async def _setup_telegram_webhook():
         await tg.set_webhook(_tg_bot, s.public_url, s.telegram_bot_token)
     except Exception as e:  # noqa: BLE001
         logging.getLogger("senim.bot").warning("setWebhook failed: %s", e)
+
+
+_warm_tasks: set = set()
+
+
+async def warm_examples() -> None:
+    """Прогрев: примеры с сайта проверяются один раз при запуске сервера и ложатся в кэш.
+    Когда жюри нажимает «Абай» → «Проверить», ответ приходит мгновенно."""
+    log = logging.getLogger("senim.warmup")
+    try:
+        examples = json.loads((DATA / "examples.json").read_text("utf-8")).get("examples", [])
+    except Exception:  # noqa: BLE001
+        return
+    for ui in ("ru", "kk", "en"):
+        async def one(ex: dict) -> None:
+            try:
+                await run_check_full(ex["text"], ex.get("question", ""), ui, channel="warmup")
+            except Exception as e:  # noqa: BLE001 — прогрев не должен ронять сервер
+                log.info("warmup %s/%s failed: %s", ex.get("id"), ui, e)
+        await asyncio.gather(*(one(ex) for ex in examples))
+    log.info("warmup done: %d examples × 3 languages", len(examples))
+
+
+@app.on_event("startup")
+async def _start_warmup():
+    s = get_settings()
+    if not s.warm_examples or os.environ.get("PYTEST_CURRENT_TEST") or not get_router().available:
+        return
+    t = asyncio.create_task(warm_examples())
+    _warm_tasks.add(t)
+    t.add_done_callback(_warm_tasks.discard)
 
 
 @app.post("/api/telegram/{secret}")
@@ -290,6 +322,11 @@ async def rating():
 @app.get("/rating")
 async def rating_page():
     return FileResponse(FRONTEND / "rating.html")
+
+
+@app.get("/privacy")
+async def privacy_page():
+    return FileResponse(FRONTEND / "privacy.html")
 
 
 @app.get("/teacher")

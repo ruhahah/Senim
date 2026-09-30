@@ -79,6 +79,17 @@ def extract_citations_heuristic(text: str) -> list[Citation]:
     return out
 
 
+CITE_HINTS = re.compile(
+    r"(doi|10\.\d{4,9}/|et al|\(\s*(1[5-9]|20)\d{2}[a-z]?\s*\)|journal|журнал|жұрнал|вестник|"
+    r"исследовани|зерттеу|study|studies|published|опубликова|жарияла|\bpp?\.\s*\d|isbn|arxiv|https?://)",
+    re.IGNORECASE)
+
+
+def may_have_citations(text: str) -> bool:
+    """Дёшево решаем, стоит ли просить ИИ выписать ссылки (это лишний запрос на каждую проверку)."""
+    return bool(CITE_HINTS.search(text)) or bool(extract_citations_heuristic(text))
+
+
 async def extract_citations(text: str, router: Optional[LLMRouter]) -> list[Citation]:
     heuristic = extract_citations_heuristic(text)
     if not router or not router.available:

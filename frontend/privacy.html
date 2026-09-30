@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Senim — данные и приватность</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%2314532d'/><path d='M30 52l13 13 27-30' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="stylesheet" href="/static/styles.css?v=5">
+  <style>
+    .p-wrap { max-width: 860px; margin: 0 auto; padding: 20px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
+    .p-wrap h1 { font-size: 30px; margin: 0 0 6px; }
+    .p-wrap h2 { font-size: 18px; margin: 0 0 8px; }
+    .p-wrap ul { margin: 0; padding-left: 20px; }
+    .p-wrap li { margin: 6px 0; line-height: 1.5; }
+    .tip { background: var(--yellow-bg); color: var(--yellow); border-radius: 12px; padding: 14px 16px; font-weight: 600; }
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" style="text-decoration:none;color:inherit">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44"/><path d="M30 52l13 13 27-30"/></svg></div>
+    <div><div class="brand-name">Senim</div><div class="brand-tag" data-t="tag"></div></div>
+  </a>
+  <div class="top-right">
+    <nav class="nav"><a href="/" data-t="navCheck"></a><a href="/trainer" data-t="navTrainer"></a><a href="/rating" data-t="navRating"></a><a href="/teacher" data-t="navTeacher"></a></nav>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button data-lang="kk">ҚАЗ</button><button data-lang="ru">РУС</button><button data-lang="en">ENG</button>
+    </div>
+  </div>
+</header>
+<main class="p-wrap" id="page"></main>
+<footer class="foot small muted"><a href="/">Senim</a> · <a href="/teacher" data-t="navTeacher"></a></footer>
+<script>
+(() => {
+  const MAIL = "ruhahah000@gmail.com";
+  const T = {
+    ru: {
+      tag: "Можно ли доверять ответу ИИ?", navCheck: "Проверка", navTrainer: "Тренажёр", navRating: "Рейтинг ИИ", navTeacher: "Учителю",
+      title: "Данные и приватность",
+      lead: "Senim работает без регистрации. Мы храним минимум — только то, что нужно для статистики и панели учителя.",
+      stored: ["Что хранится", [
+        "Статистика проверок — без текста: время, язык, сколько утверждений подтверждено или опровергнуто, индекс доверия, время и стоимость проверки, чей это был ответ (если вы выбрали ИИ).",
+        "Если ученик в классе: имя, которое он ввёл сам (можно ник), код класса, первые 300 символов проверенного текста и найденные ошибки ИИ. Это видит только учитель этого класса по личной ссылке с ключом.",
+        "Тренажёр: имя или ник, очки и время раунда — для рейтинга раунда.",
+        "Telegram: номер чата — только если ученик вступил в класс командой /class. Команда /leave удаляет эту запись.",
+        "Короткий отзыв «разбор полезен?» — без имени."]],
+      notStored: ["Что не хранится", [
+        "Аккаунты, пароли, email, телефоны, фото.",
+        "Текст проверок вне класса — в базу не пишется. Чтобы повторная проверка шла мгновенно, ответы ИИ временно кэшируются на сервере без связи с человеком; кэш стирается при перезапуске сервера.",
+        "Нет рекламы, трекеров и продажи данных."]],
+      sent: ["Куда уходит текст", [
+        "Текст ответа отправляется ИИ-провайдеру для проверки: OpenAI, а при сбое — Google Gemini или Groq.",
+        "Короткие поисковые запросы уходят в Википедию, научные ссылки — в реестры DOI (doi.org, Crossref, OpenAlex)."]],
+      tip: "Не вставляйте в Senim личные данные. Ученикам лучше вводить имя или ник, а не фамилию.",
+      del: "Учитель может попросить удалить данные своего класса: " },
+    kk: {
+      tag: "ЖИ жауабына сенуге бола ма?", navCheck: "Тексеру", navTrainer: "Жаттықтырғыш", navRating: "ЖИ рейтингі", navTeacher: "Мұғалімге",
+      title: "Деректер және құпиялылық",
+      lead: "Senim тіркеусіз жұмыс істейді. Біз тек статистика мен мұғалім панеліне қажетті ең аз деректі сақтаймыз.",
+      stored: ["Не сақталады", [
+        "Тексеру статистикасы — мәтінсіз: уақыт, тіл, қанша тұжырым расталды не жоққа шығарылды, сенім индексі, тексеру уақыты мен құны, жауап қай ЖИ-дікі (таңдасаңыз).",
+        "Оқушы сыныпта болса: өзі жазған аты (лақап ат та болады), сынып коды, тексерілген мәтіннің алғашқы 300 таңбасы және табылған ЖИ қателері. Оны тек сол сыныптың мұғалімі жеке кілтті сілтеме арқылы көреді.",
+        "Жаттықтырғыш: аты не лақап аты, ұпай және уақыт — раунд рейтингі үшін.",
+        "Telegram: чат нөмірі — тек оқушы /class командасымен сыныпқа қосылса. /leave командасы бұл жазбаны өшіреді.",
+        "«Талдау пайдалы ма?» деген қысқа пікір — атаусыз."]],
+      notStored: ["Не сақталмайды", [
+        "Аккаунт, құпиясөз, email, телефон, фото.",
+        "Сыныптан тыс тексерулердің мәтіні базаға жазылмайды. Қайта тексеру лезде болуы үшін ЖИ жауаптары серверде адамға байланыссыз уақытша кэштеледі; сервер қайта қосылғанда кэш өшеді.",
+        "Жарнама, трекер және деректерді сату жоқ."]],
+      sent: ["Мәтін қайда жіберіледі", [
+        "Жауап мәтіні тексеру үшін ЖИ-провайдерге жіберіледі: OpenAI, ақау болса — Google Gemini немесе Groq.",
+        "Қысқа іздеу сұраулары Уикипедияға, ғылыми сілтемелер DOI тізілімдеріне (doi.org, Crossref, OpenAlex) жіберіледі."]],
+      tip: "Senim-ге жеке деректерді енгізбеңіз. Оқушыларға тегін емес, атын не лақап атын жазған дұрыс.",
+      del: "Мұғалім өз сыныбының деректерін өшіруді сұрай алады: " },
+    en: {
+      tag: "Can you trust an AI answer?", navCheck: "Check", navTrainer: "Trainer", navRating: "AI rating", navTeacher: "For teachers",
+      title: "Data and privacy",
+      lead: "Senim works without sign-up. We keep the minimum — only what statistics and the teacher dashboard need.",
+      stored: ["What we store", [
+        "Check statistics — without the text: time, language, how many claims were supported or contradicted, trust index, check time and cost, which AI wrote the answer (if you chose one).",
+        "If a student is in a class: the name they typed (a nickname is fine), the class code, the first 300 characters of the checked text and the AI errors found. Only that class's teacher sees this, through a private link with a key.",
+        "Trainer: name or nickname, score and time — for the round leaderboard.",
+        "Telegram: the chat number — only if the student joined a class with /class. The /leave command deletes it.",
+        "The short \"was this useful?\" feedback — without a name."]],
+      notStored: ["What we don't store", [
+        "Accounts, passwords, emails, phone numbers, photos.",
+        "Text of checks outside a class is not written to the database. To make repeat checks instant, AI replies are cached on the server for a while, not linked to any person; the cache is wiped when the server restarts.",
+        "No ads, no trackers, no selling data."]],
+      sent: ["Where the text goes", [
+        "The answer text is sent to an AI provider for checking: OpenAI, or Google Gemini / Groq if it fails.",
+        "Short search queries go to Wikipedia; scholarly references go to DOI registries (doi.org, Crossref, OpenAlex)."]],
+      tip: "Don't paste personal data into Senim. Students should use a first name or nickname, not a surname.",
+      del: "A teacher can ask us to delete their class data: " },
+  };
+  let lang = (() => { try { return localStorage.getItem("senim.lang") || "ru"; } catch { return "ru"; } })();
+  const el = (tag, attrs, ...kids) => { const e = document.createElement(tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); kids.forEach((k) => e.append(k)); return e; };
+  const section = ([h, items]) => el("section", { class: "card" }, el("h2", {}, h), el("ul", {}, ...items.map((i) => el("li", {}, i))));
+  function render() {
+    const t = T[lang] || T.ru;
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-t]").forEach((n) => { n.textContent = t[n.dataset.t] || n.textContent; });
+    document.querySelectorAll(".lang-switch button").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
+    const mail = el("a", { href: "mailto:" + MAIL }, MAIL);
+    document.getElementById("page").replaceChildren(
+      el("div", { class: "hero" }, el("h1", {}, t.title), el("p", { class: "muted" }, t.lead)),
+      section(t.stored), section(t.notStored), section(t.sent),
+      el("div", { class: "tip" }, t.tip),
+      el("p", { class: "muted" }, t.del, mail));
+  }
+  document.querySelectorAll(".lang-switch button").forEach((b) => b.addEventListener("click", () => {
+    lang = b.dataset.lang; try { localStorage.setItem("senim.lang", lang); } catch {} render();
+  }));
+  render();
+})();
+</script>
+</body>
+</html>

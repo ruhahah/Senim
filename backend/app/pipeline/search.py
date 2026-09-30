@@ -24,6 +24,7 @@ log = logging.getLogger("senim.search")
 UA = "SenimFactChecker/0.1 ({contact}; student fact-checking project for WIT Teens Hackathon) python-httpx"
 LAST_ERRORS: dict[str, str] = {}  # host -> последняя ошибка (для диагностики в smoke_test)
 PASSAGE_CHARS = 700
+SEARCH_TIMEOUT_S = 7.0
 
 
 def _stem(tok: str) -> str:
@@ -211,7 +212,15 @@ async def gather_evidence(claim: Claim, claim_lang: str, client: httpx.AsyncClie
     if queries:
         tasks.append(search_tavily(client, queries[-1] if len(queries) > 1 else queries[0]))
 
-    for batch in await asyncio.gather(*tasks, return_exceptions=True):
+    # медленный сайт не должен тормозить всю проверку: что не успело за SEARCH_TIMEOUT_S — пропускаем
+    async def capped(coro):
+        try:
+            return await asyncio.wait_for(coro, SEARCH_TIMEOUT_S)
+        except asyncio.TimeoutError:
+            log.info("search timeout (%ss)", SEARCH_TIMEOUT_S)
+            return []
+
+    for batch in await asyncio.gather(*(capped(t) for t in tasks), return_exceptions=True):
         if isinstance(batch, list):
             results.extend(batch)
 
@@ -235,4 +244,4 @@ async def gather_evidence(claim: Claim, claim_lang: str, client: httpx.AsyncClie
 def http_client() -> httpx.AsyncClient:
     email = get_settings().valid_contact_email
     contact = f"mailto:{email}" if email else "https://www.mediawiki.org/wiki/API:Etiquette"
-    return httpx.AsyncClient(timeout=20.0, headers={"User-Agent": UA.format(contact=contact)}, follow_redirects=True)
+    return httpx.AsyncClient(timeout=10.0, headers={"User-Agent": UA.format(contact=contact)}, follow_redirects=True)

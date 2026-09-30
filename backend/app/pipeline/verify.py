@@ -13,7 +13,7 @@ from typing import Optional
 
 from ..config import get_settings
 from ..llm import LLMRouter
-from ..prompts import (EXTRACT_SYSTEM, EXTRACT_USER, LANG_NAMES, QUOTE_REPAIR_SYSTEM, QUOTE_REPAIR_USER,
+from ..prompts import (EXTRACT_ONE_USER, EXTRACT_SYSTEM, EXTRACT_USER, LANG_NAMES, QUOTE_REPAIR_SYSTEM, QUOTE_REPAIR_USER,
                        VERDICT_SYSTEM, VERDICT_USER)
 from ..schemas import Claim, ClaimResult, ClaimType, Evidence, RawVerdict, Sentence, Status
 from . import nli
@@ -88,6 +88,59 @@ async def extract_claims(router: LLMRouter, text: str, lang: str, sentences: lis
         claim.sentence_index = locate_sentence(claim.span or claim.text, sentences)
         claims.append(claim)
     return fill_uncovered(claims, sentences, s.max_claims)
+
+
+PER_SENTENCE_MAX = 3  # утверждений из одного предложения
+
+
+def worth_checking(sent: Sentence) -> bool:
+    text = sent.text.strip()
+    return len(text) >= 15 and bool(re.search(r"\w{3,}", text)) and not text.endswith(":")
+
+
+def sentence_fallback_claim(sent: Sentence, claim_id: int) -> Claim:
+    """Если ИИ не выделил утверждений — проверяем предложение целиком."""
+    text = sent.text.strip()
+    ctype = (ClaimType.citation if REF_MARKERS.search(text)
+             else ClaimType.opinion if OPINION_MARKERS.search(text) else ClaimType.fact)
+    return Claim(id=claim_id, text=text, span=text, type=ctype, importance=2,
+                 search_queries=[text[:120]], sentence_index=sent.index)
+
+
+async def extract_sentence_claims(router: LLMRouter, text: str, lang: str, sent: Sentence,
+                                  first_id: int, question: str = "") -> list[Claim]:
+    """Утверждения одного предложения. Вызывается параллельно для всех предложений ответа:
+    короткий ответ ИИ приходит за 1–2 с, и проверка предложения стартует сразу, не дожидаясь остальных."""
+    system = EXTRACT_SYSTEM.format(max_claims=PER_SENTENCE_MAX)
+    qb = f"ВОПРОС ПОЛЬЗОВАТЕЛЯ: {question}\n" if question.strip() else ""
+    user = EXTRACT_ONE_USER.format(lang=LANG_NAMES.get(lang, lang), question_block=qb,
+                                   text=text[:6000], sentence=sent.text)
+    data = await router.complete_json(system, user, cache_ns="extract1")
+    raw = data.get("claims", []) if isinstance(data, dict) else data
+    claims: list[Claim] = []
+    for c in raw if isinstance(raw, list) else []:
+        if len(claims) >= PER_SENTENCE_MAX:
+            break
+        if not isinstance(c, dict) or not str(c.get("text", "")).strip():
+            continue
+        span = str(c.get("span", "")).strip()
+        # модель видит весь ответ как контекст — утверждения из чужих предложений отбрасываем
+        if span and locate_sentence(span, [sent]) is None:
+            continue
+        try:
+            ctype = ClaimType(c.get("type", "fact"))
+        except ValueError:
+            ctype = ClaimType.fact
+        try:
+            imp = min(3, max(1, int(c.get("importance", 2))))
+        except (TypeError, ValueError):
+            imp = 2
+        claims.append(Claim(
+            id=first_id + len(claims), text=str(c["text"]).strip(), span=span or sent.text.strip(),
+            type=ctype, importance=imp, sentence_index=sent.index,
+            search_queries=[str(q) for q in (c.get("search_queries") or []) if str(q).strip()][:3],
+        ))
+    return claims or [sentence_fallback_claim(sent, first_id)]
 
 
 OPINION_MARKERS = re.compile(

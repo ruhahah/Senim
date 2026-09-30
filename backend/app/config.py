@@ -46,8 +46,8 @@ class Settings(BaseSettings):
     llm_price_in: float = 0.0
     llm_price_out: float = 0.0
 
-    llm_timeout_s: float = 60.0
-    llm_max_concurrency: int = 8   # одновременных запросов к одному провайдеру (Groq всегда ≤ 2)
+    llm_timeout_s: float = 30.0
+    llm_max_concurrency: int = 16  # одновременных запросов к одному провайдеру (Groq всегда ≤ 2)
 
     # ---------- Поиск доказательств ----------
     tavily_api_key: str = ""          # необязательно; без него — только Википедия + база Senim
@@ -76,9 +76,10 @@ class Settings(BaseSettings):
     rate_limit_daily_total: int = 300    # проверок в сутки на весь сервис (0 = без лимита)
 
     # ---------- Прочее ----------
-    max_claims: int = 12
+    max_claims: int = 24
     cache_path: str = str(ROOT_DIR / "data" / "cache.sqlite")
     cache_enabled: bool = True
+    warm_examples: bool = True   # при запуске прогнать примеры сайта, чтобы они отвечали мгновенно
     stats_path: str = str(ROOT_DIR / "data" / "stats.sqlite")
     stats_enabled: bool = True
     # Постоянная база (PostgreSQL, например бесплатный Neon): статистика и классы учителей

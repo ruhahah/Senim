@@ -159,7 +159,8 @@
         break;
       case "claims":
         ev.claims.forEach((c) => state.claims.set(c.id, c));
-        setProgress(t("progress_check", { done: 0, total: ev.claims.length }), 25);
+        setProgress(t("progress_check", { done: state.results.size, total: state.claims.size }),
+          25 + 65 * (state.results.size / Math.max(1, state.claims.size)));
         break;
       case "claim_result":
         state.results.set(ev.result.claim_id, ev.result);
@@ -223,6 +224,8 @@
         : cr.status === "mismatch" ? "disputed" : cr.status === "verified" ? "supported" : "unverifiable";
       if (!worst || STATUS_ORDER[cs] > STATUS_ORDER[worst]) worst = cs;
     }
+    // предложения проверяются параллельно: пока утверждения не извлечены, предложение «в работе»
+    if (!claimsForSentence(s.index).length && !cr && state.running && !state.done) pending = true;
     return { status: worst, pending: pending && !worst };
   }
 
