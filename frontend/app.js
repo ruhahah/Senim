@@ -164,6 +164,7 @@
       state.running = false;
       show("progress", false);
       setButtons();
+      requestAnimationFrame(scrollToResult);  // после того как карточка прогресса скрылась
     }
   }
 
@@ -207,9 +208,20 @@
           $("btnReveal").disabled = false;
           $("thinkStatus").textContent = t("thinkReady", { n: state.marked.size });
         }
+        state.scrollToResult = true;
         break;
     }
     renderAll();
+  }
+
+  // на телефоне итог оказывается ниже поля ввода — показываем его сразу после проверки
+  function scrollToResult() {
+    if (!state.scrollToResult) return;
+    state.scrollToResult = false;
+    if (!window.matchMedia("(max-width: 900px)").matches) return;
+    const target = !$("summaryCard").classList.contains("hidden") ? $("summaryCard")
+      : !$("thinkPanel").classList.contains("hidden") ? $("thinkPanel") : $("textCard");
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function setProgress(text, pct) {

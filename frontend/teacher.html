@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Senim — панель учителя</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%2314532d'/><path d='M30 52l13 13 27-30' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-  <link rel="stylesheet" href="/static/styles.css?v=7">
+  <link rel="stylesheet" href="/static/styles.css?v=9">
   <style>
     .t-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
     .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
@@ -32,6 +32,14 @@
     .invite-msg { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--green-bg); }
     .invite-msg p { margin: 0 0 8px; font-size: 14px; white-space: pre-line; }
     @media (max-width: 700px) { .invite { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) {
+      .code-big { font-size: 34px; }
+      .invite img { width: 150px; height: 150px; }
+      .invite-msg .row .btn { flex: 1 1 0; }
+      .kpis { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .kpi { padding: 10px 12px; }
+      .kpi b { font-size: 24px; }
+    }
   </style>
 </head>
 <body>

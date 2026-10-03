@@ -160,7 +160,7 @@ input[type=text]:focus, textarea:focus { outline: 2px solid var(--brand-2); outl
 
 /* ---------- summary ---------- */
 .summary { display: flex; gap: 20px; align-items: center; }
-@media (max-width: 520px) { .summary { flex-direction: column; text-align: center; } }
+@media (max-width: 520px) { .summary { gap: 14px; } }
 .gauge-wrap { position: relative; width: 124px; height: 124px; flex: none; }
 .gauge { width: 100%; height: 100%; transform: rotate(-90deg); }
 .gauge circle { fill: none; stroke-width: 11; }
@@ -280,3 +280,41 @@ a.chip { text-decoration: none; }
 .beta { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 7px; border-radius: 99px; background: var(--yellow-bg); color: var(--yellow); }
 #photoStatus.ok { color: var(--green); }
 #photoStatus.err { color: var(--red); }
+
+/* ---------- телефон: компактная шапка, меньше отступов, всё под палец ---------- */
+@media (max-width: 600px) {
+  .topbar { position: static; flex-wrap: wrap; padding: 8px 12px 0; gap: 8px; backdrop-filter: none; background: var(--bg); }
+  .top-right { display: contents; }
+  .brand-tag, #providerPill { display: none; }
+  .logo svg { width: 30px; height: 30px; }
+  .brand-name { font-size: 19px; }
+  .lang-switch { margin-left: auto; }
+  .lang-switch button { padding: 8px 11px; font-size: 13px; }
+  /* разделы — одной строкой с прокруткой, как вкладки */
+  .nav { order: 3; flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 0 -12px; padding: 2px 12px 10px;
+         scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { flex: 0 0 auto; white-space: nowrap; padding: 8px 14px; font-size: 14px; border-radius: 99px;
+           background: var(--card); border: 1px solid var(--line); }
+  .nav a.on { border-color: transparent; }
+
+  .layout { padding: 0 10px; margin: 10px auto 16px; gap: 12px; }
+  .card { padding: 16px; }
+  h1 { font-size: 21px; }
+  .input-card > .muted { font-size: 14px; margin-top: 2px; }
+  textarea#answer { height: 170px; min-height: 120px; }
+  input[type=text], textarea, select { font-size: 16px; }   /* iPhone не приближает поле при вводе */
+  .input-card .actions { margin: 14px -16px 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+
+  /* итог проверки: индекс слева, вывод справа — сразу видно на одном экране */
+  .summary { flex-direction: row; text-align: left; align-items: center; }
+  .gauge-wrap { width: 92px; height: 92px; }
+  .gauge-value span { font-size: 28px; }
+  .band { font-size: 18px; }
+  #textCard .row { flex-wrap: wrap; gap: 2px 12px; }
+  .highlighted { font-size: 16px; line-height: 1.85; }
+  .claim, .citation { padding: 12px; }
+  .quote { margin-left: 0; margin-right: 0; }
+  .foot { padding: 16px 12px 28px; }
+  #charCount { white-space: nowrap; }
+}
