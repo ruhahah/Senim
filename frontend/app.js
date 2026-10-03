@@ -560,29 +560,42 @@
     el.textContent = t(key);
     el.className = `small ${cls || "muted"}`;
   }
+  const MAX_FILE = 10 * 1024 * 1024;
+  const FILE_RE = /\.(pdf|docx|txt|md)$/i;
+  function readAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(new Error("read"));
+      r.readAsDataURL(file);
+    });
+  }
   let photoBusy = false;
   async function readPhoto(file) {
     if (!file || photoBusy || state.running) return;
-    if (!file.type.startsWith("image/")) { photoStatus("photoFail", "err"); return; }
+    const isImage = (file.type || "").startsWith("image/");
+    if (!isImage && !FILE_RE.test(file.name || "")) { photoStatus("fileBadType", "err"); return; }
+    if (file.size > MAX_FILE) { photoStatus("photoTooBig", "err"); return; }
     photoBusy = true;
     document.querySelector(".btn-photo").classList.add("busy");
-    photoStatus("photoReading");
+    photoStatus(isImage ? "photoReading" : "fileReading");
     try {
-      const image = await shrinkImage(file);
-      const res = await fetch("/api/ocr", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image }),
+      const data64 = isImage ? await shrinkImage(file) : await readAsDataURL(file);
+      const res = await fetch("/api/extract", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file: data64, name: file.name || "" }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const code = data.detail && data.detail.code;
-        photoStatus(code === "no_text" ? "photoNoText" : code === "too_big" ? "photoTooBig"
-          : res.status === 429 ? "photoLimit" : "photoFail", "err");
+        photoStatus({ no_text: "photoNoText", too_big: "photoTooBig", scanned_pdf: "fileScanned",
+                      bad_type: "fileBadType" }[code] || (res.status === 429 ? "photoLimit" : "photoFail"), "err");
         return;
       }
       $("answer").value = data.text.slice(0, 12000);
       if (data.question && !$("question").value.trim()) $("question").value = data.question;
       updateCount();
-      photoStatus("photoDone", "ok");
+      photoStatus(data.truncated ? "fileTruncated" : "photoDone", "ok");
       // ученик сначала видит распознанный текст — ошибку распознавания не выдадим за ошибку ИИ
       $("answer").scrollIntoView({ behavior: "smooth", block: "center" });
     } catch {
@@ -596,8 +609,19 @@
   $("photoInput").addEventListener("change", (e) => readPhoto(e.target.files[0]));
   // на компьютере скриншот можно просто вставить в поле ответа (Ctrl+V)
   $("answer").addEventListener("paste", (e) => {
-    const item = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith("image/"));
+    const item = [...(e.clipboardData?.items || [])].find((i) => i.kind === "file");
     if (item) { e.preventDefault(); readPhoto(item.getAsFile()); }
+  });
+  // файл можно перетащить прямо на карточку ввода
+  const inputCard = document.querySelector(".input-card");
+  inputCard.addEventListener("dragover", (e) => {
+    if ([...(e.dataTransfer?.types || [])].includes("Files")) { e.preventDefault(); inputCard.classList.add("dragging"); }
+  });
+  inputCard.addEventListener("dragleave", (e) => { if (!inputCard.contains(e.relatedTarget)) inputCard.classList.remove("dragging"); });
+  inputCard.addEventListener("drop", (e) => {
+    inputCard.classList.remove("dragging");
+    const f = e.dataTransfer?.files?.[0];
+    if (f) { e.preventDefault(); readPhoto(f); }
   });
 
   // ---------------------------------------------------------- feedback (мини-опрос)
@@ -690,6 +714,14 @@
   applyI18n();
   loadExamples();
   loadStats();
+  if (params.get("upload")) {  // из расширения: «Фото или файл» — показываем кнопку загрузки
+    history.replaceState(null, "", location.pathname);
+    setTimeout(() => {
+      const row = document.querySelector(".photo-row");
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      row.classList.add("flash");
+    }, 300);
+  }
   if (params.get("text")) {
     $("answer").value = params.get("text").slice(0, 12000);
     updateCount();

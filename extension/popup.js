@@ -40,6 +40,13 @@ $("checkText").addEventListener("click", () => {
 });
 
 
+// фото, скриншот, PDF или Word: окно выбора файла закрывает всплывающее окно расширения,
+// поэтому открываем сайт Senim — там кнопка «Фото или файл» (и камера на телефоне)
+$("checkFile").addEventListener("click", () => {
+  chrome.runtime.sendMessage({ type: "senim-upload" });
+  window.close();
+});
+
 // класс для режима учителя: проверки из ChatGPT/Gemini попадут в панель учителя
 chrome.storage.sync.get({ classCode: "", student: "" }, ({ classCode, student }) => {
   $("classCode").value = classCode; $("student").value = student;

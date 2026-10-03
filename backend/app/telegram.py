@@ -25,7 +25,7 @@ log = logging.getLogger("senim.bot")
 ICON = {"supported": "🟢", "disputed": "🟡", "contradicted": "🔴", "unverifiable": "⚪"}
 T = {
     "kk": {
-        "start": "Сәлем! Мен <b>Senim</b> — ЖИ жауаптарын тексеремін.\n\nChatGPT, Gemini немесе басқа ЖИ жауабын маған жіберіңіз (немесе қайта жіберіңіз). Мен әр тұжырымды дереккөздермен салыстырып, неге сенуге болатынын не болмайтынын түсіндіремін.",
+        "start": "Сәлем! Мен <b>Senim</b> — ЖИ жауаптарын тексеремін.\n\nChatGPT, Gemini немесе басқа ЖИ жауабын маған жіберіңіз — мәтін, скриншот, фото, PDF немесе Word. Мен әр тұжырымды дереккөздермен салыстырып, неге сенуге болатынын не болмайтынын түсіндіремін.",
         "wait": "🔎 Тексеріп жатырмын… (10–30 сек)",
         "short": "Тексеру үшін ЖИ жауабының мәтінін жіберіңіз (кемінде 10 таңба).",
         "band": {"high": "Сүйенуге болады", "medium": "Мұқият тексеріңіз", "low": "Тексермей қолданбаңыз", "na": "Тексерілетін факт табылмады"},
@@ -40,9 +40,10 @@ T = {
         "in_class": "📚 Сынып: {name}",
         "fb_useful": "Көмектесті ме?", "fb_notice": "Қатені өзіңіз байқар ма едіңіз?", "yes": "Иә", "no": "Жоқ", "thanks": "Рақмет!",
         "photo_wait": "📷 Суреттегі мәтінді оқып жатырмын…", "photo_none": "Суреттен мәтін табылмады. Анығырақ түсіріп көріңіз немесе мәтінді жіберіңіз.", "photo_fail": "Суретті тану мүмкін болмады. Мәтінді көшіріп жіберіңіз.",
+        "file_wait": "📄 Файлды оқып жатырмын…", "file_scanned": "PDF ішінде мәтін жоқ (скан). Беттің скриншотын жіберіңіз.", "file_type": "Фото, PDF, Word (.docx) немесе TXT жіберіңіз.", "file_big": "Файл тым үлкен (10 МБ-қа дейін).",
     },
     "ru": {
-        "start": "Привет! Я <b>Senim</b> — проверяю ответы ИИ.\n\nПришлите или перешлите мне ответ ChatGPT, Gemini или другого ИИ. Я сверю каждое утверждение с источниками и объясню, почему ему можно или нельзя доверять.",
+        "start": "Привет! Я <b>Senim</b> — проверяю ответы ИИ.\n\nПришлите мне ответ ChatGPT, Gemini или другого ИИ — текстом, скриншотом, фото, PDF или Word. Я сверю каждое утверждение с источниками и объясню, почему ему можно или нельзя доверять.",
         "wait": "🔎 Проверяю… (10–30 сек)",
         "short": "Пришлите текст ответа ИИ для проверки (от 10 символов).",
         "band": {"high": "Можно опираться", "medium": "Проверяй внимательно", "low": "Не используй без проверки", "na": "Проверяемых фактов не найдено"},
@@ -57,9 +58,10 @@ T = {
         "in_class": "📚 Класс: {name}",
         "fb_useful": "Помогло?", "fb_notice": "Заметили бы ошибку сами?", "yes": "Да", "no": "Нет", "thanks": "Спасибо!",
         "photo_wait": "📷 Читаю текст на фото…", "photo_none": "На фото не найден текст. Снимите чётче или пришлите текст.", "photo_fail": "Не удалось распознать фото. Пришлите текст ответа.",
+        "file_wait": "📄 Читаю файл…", "file_scanned": "В PDF нет текста (это скан). Пришлите скриншот страницы.", "file_type": "Пришлите фото, PDF, Word (.docx) или TXT.", "file_big": "Файл слишком большой (до 10 МБ).",
     },
     "en": {
-        "start": "Hi! I'm <b>Senim</b> — I check AI answers.\n\nSend or forward me an answer from ChatGPT, Gemini or another AI. I'll check every claim against sources and explain why you can or can't trust it.",
+        "start": "Hi! I'm <b>Senim</b> — I check AI answers.\n\nSend me an answer from ChatGPT, Gemini or another AI — as text, a screenshot, a photo, PDF or Word. I'll check every claim against sources and explain why you can or can't trust it.",
         "wait": "🔎 Checking… (10–30 s)",
         "short": "Send the AI answer text to check (at least 10 characters).",
         "band": {"high": "Safe to rely on", "medium": "Check carefully", "low": "Don't use without checking", "na": "No checkable facts found"},
@@ -74,6 +76,7 @@ T = {
         "in_class": "📚 Class: {name}",
         "fb_useful": "Helpful?", "fb_notice": "Would you have noticed?", "yes": "Yes", "no": "No", "thanks": "Thanks!",
         "photo_wait": "📷 Reading the text in the photo…", "photo_none": "No text found in the photo. Try a sharper shot or send the text.", "photo_fail": "Couldn't read the photo. Please send the text instead.",
+        "file_wait": "📄 Reading the file…", "file_scanned": "This PDF has no text (it is a scan). Send a screenshot of the page.", "file_type": "Send a photo, PDF, Word (.docx) or TXT file.", "file_big": "The file is too large (up to 10 MB).",
     },
 }
 
@@ -144,7 +147,7 @@ class Bot:
     async def handle(self, msg: dict):
         chat = msg["chat"]["id"]
         text = (msg.get("text") or msg.get("caption") or "").strip()
-        if msg.get("photo") and not text.startswith("/"):
+        if (msg.get("photo") or msg.get("document")) and not text.startswith("/"):
             text = await self._photo_text(msg, chat)
             if text is None:
                 return
@@ -208,30 +211,53 @@ class Bot:
                             disable_web_page_preview=True, **extra)
 
     async def _photo_text(self, msg: dict, chat) -> str | None:
-        """Фото или скриншот ответа ИИ → текст (бета). None — ответ пользователю уже отправлен."""
+        """Фото, скриншот или файл (PDF, Word, TXT) → текст (бета). None — ответ пользователю уже отправлен."""
         lang = ("kk" if (msg.get("from") or {}).get("language_code") == "kk" else
                 "en" if (msg.get("from") or {}).get("language_code") == "en" else "ru")
         t = T[lang]
+        if msg.get("photo"):
+            best = max(msg["photo"], key=lambda p: p.get("file_size") or 0)  # самое чёткое из размеров
+            file_id, name, mime = best["file_id"], "photo.jpg", "image/jpeg"
+        else:
+            doc = msg["document"]
+            file_id, name = doc["file_id"], doc.get("file_name") or ""
+            mime = (doc.get("mime_type") or "").lower()
+            if (doc.get("file_size") or 0) > ocr.MAX_BYTES:
+                await self.call("sendMessage", chat_id=chat, text=t["file_big"])
+                return None
+            if mime not in ocr.ALLOWED_MIME | {"application/pdf", ocr.DOCX_MIME, "text/plain", "text/markdown"}:
+                ext = ("." + name.rsplit(".", 1)[-1].lower()) if "." in name else ""
+                mime = ocr.EXT_MIME.get(ext, "")
+            if not mime:
+                await self.call("sendMessage", chat_id=chat, text=t["file_type"])
+                return None
         if not ratelimit.hit(f"ocr:tg:{chat}", 40):
             await self.call("sendMessage", chat_id=chat, text=t["photo_fail"])
             return None
-        note = await self.call("sendMessage", chat_id=chat, text=t["photo_wait"], reply_to_message_id=msg["message_id"])
+        is_image = mime in ocr.ALLOWED_MIME
+        note = await self.call("sendMessage", chat_id=chat, text=t["photo_wait"] if is_image else t["file_wait"],
+                               reply_to_message_id=msg["message_id"])
+        err = None
+        out = None
         try:
-            best = max(msg["photo"], key=lambda p: p.get("file_size") or 0)  # самое чёткое из размеров
-            f = await self.call("getFile", file_id=best["file_id"])
+            f = await self.call("getFile", file_id=file_id)
             url = self.api.replace("/bot", "/file/bot", 1) + "/" + f["file_path"]
             r = await self.client.get(url)
             r.raise_for_status()
             if len(r.content) > ocr.MAX_BYTES:
                 raise ocr.OCRError("too_big")
-            out = await ocr.extract_text("image/jpeg", r.content)
+            out = await ocr.extract_any(mime, r.content)
+        except ocr.OCRError as e:
+            err = e.code
+            log.warning("file extract failed: %s", e)
         except Exception as e:  # noqa: BLE001
-            log.warning("photo OCR failed: %s", e)
-            out = None
+            err = "fail"
+            log.warning("file extract failed: %s", e)
         if note:
             await self.call("deleteMessage", chat_id=chat, message_id=note["message_id"])
         if out is None:
-            await self.call("sendMessage", chat_id=chat, text=t["photo_fail"])
+            key = {"scanned_pdf": "file_scanned", "too_big": "file_big", "bad_type": "file_type"}.get(err, "photo_fail")
+            await self.call("sendMessage", chat_id=chat, text=t[key])
             return None
         if len(out["text"]) < 10:
             await self.call("sendMessage", chat_id=chat, text=t["photo_none"])

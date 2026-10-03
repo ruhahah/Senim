@@ -318,3 +318,6 @@ a.chip { text-decoration: none; }
   .foot { padding: 16px 12px 28px; }
   #charCount { white-space: nowrap; }
 }
+.input-card.dragging { outline: 3px dashed var(--brand-2); outline-offset: -6px; }
+.photo-row.flash { animation: flash 1.2s ease 2; border-radius: 12px; }
+@keyframes flash { 50% { background: var(--green-bg); } }

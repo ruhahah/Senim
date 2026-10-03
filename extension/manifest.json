@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Senim — проверка ответов ИИ",
   "short_name": "Senim",
-  "version": "0.2.0",
-  "description": "Кнопка «Проверить в Senim» прямо под ответом ChatGPT и Gemini: ошибки подсвечиваются в тексте. Или выделите любой ответ ИИ → «Проверить в Senim». Қазақша · Русский · English.",
+  "version": "0.3.0",
+  "description": "Кнопка «Проверить в Senim» прямо под ответом ChatGPT и Gemini: ошибки подсвечиваются в тексте. Или выделите любой ответ ИИ → «Проверить в Senim». Фото, скриншот, PDF и Word — через кнопку расширения. Қазақша · Русский · English.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",

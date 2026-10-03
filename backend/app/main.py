@@ -21,7 +21,7 @@ from .pipeline import nli
 from .pipeline.orchestrator import run_check, run_check_full
 from .pipeline.search import http_client
 from .pipeline.text_utils import split_sentences
-from .schemas import (CheckRequest, CitationsRequest, OCRRequest, ClassCreateRequest, FeedbackRequest,
+from .schemas import (CheckRequest, CitationsRequest, ExtractRequest, OCRRequest, ClassCreateRequest, FeedbackRequest,
                       ThinkResultRequest, TrainerAnswerRequest, TrainerClassRequest, TrainerNewRequest)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -349,6 +349,25 @@ async def ocr_image(req: OCRRequest, request: Request):
         status = {"too_big": 413, "llm_failed": 503, "llm_not_configured": 503}.get(e.code, 400)
         raise HTTPException(status, {"code": e.code, "message": str(e)[:200]})
     if not out["text"]:
+        raise HTTPException(422, {"code": "no_text", "message": "no readable text"})
+    return out
+
+
+@app.post("/api/extract")
+async def extract_file(req: ExtractRequest, request: Request):
+    """Фото, скриншот, PDF, Word или TXT → текст. Проверку ученик запускает сам, увидев текст."""
+    key = ratelimit.client_key(request)
+    if not ratelimit.is_local(key) and not ratelimit.hit("ocr:" + key, 40):
+        raise HTTPException(429, {"code": "rate_limit", "message": "too many files"})
+    try:
+        mime, raw = ocr.decode_file(req.file, req.name)
+        if mime in ocr.ALLOWED_MIME and not get_router().available:
+            raise ocr.OCRError("llm_not_configured")
+        out = await ocr.extract_any(mime, raw)
+    except ocr.OCRError as e:
+        status = {"too_big": 413, "llm_failed": 503, "llm_not_configured": 503}.get(e.code, 400)
+        raise HTTPException(status, {"code": e.code, "message": str(e)[:200]})
+    if len(out["text"]) < 10:
         raise HTTPException(422, {"code": "no_text", "message": "no readable text"})
     return out
 

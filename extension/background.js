@@ -43,6 +43,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg && msg.type === "senim-open") openSenim(msg.text);
+  if (msg && msg.type === "senim-upload") {
+    getServer().then((server) => chrome.tabs.create({ url: `${server}/?src=extension&upload=1` }));
+  }
 });
 
 

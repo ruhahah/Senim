@@ -136,6 +136,11 @@ class OCRRequest(BaseModel):
     image: str = Field(..., min_length=100, max_length=7_000_000)  # data:image/jpeg;base64,…
 
 
+class ExtractRequest(BaseModel):
+    file: str = Field(..., min_length=20, max_length=14_000_000)   # data:<тип>;base64,…
+    name: str = Field("", max_length=200)                         # имя файла: по расширению узнаём тип
+
+
 class CitationsRequest(BaseModel):
     text: str = Field(..., min_length=5, max_length=12000)
 
