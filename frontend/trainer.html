@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
   <title>Senim — тренажёр «Найди ложь ИИ»</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%2314532d'/><path d='M30 52l13 13 27-30' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-  <link rel="stylesheet" href="/static/styles.css?v=5">
+  <link rel="stylesheet" href="/static/styles.css?v=7">
   <style>
     .g-wrap { max-width: 860px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
     .hero h1 { font-size: 30px; margin: 0 0 6px; }
@@ -29,6 +29,12 @@
     table.lb td, table.lb th { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; }
     table.lb th { font-size: 12px; color: var(--muted); text-transform: uppercase; }
     .topic-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    @media (max-width: 600px) {
+      .bubble { font-size: 18px; line-height: 2.1; padding: 14px; }
+      .s { padding: 4px 3px; }
+      .hud { position: sticky; bottom: 0; background: var(--card); padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+      .hud .btn-primary { flex: 1 1 100%; min-height: 48px; font-size: 17px; }
+    }
   </style>
 </head>
 <body>
@@ -107,7 +113,7 @@
       hit: "Нашёл!", miss: "Пропустил", fa: "Это было верно", correct: "Верно:", quote: "Из справки:", sources: "Справки Senim:",
       lbTitle: "Рейтинг раунда", thName: "Имя", thScore: "Очки", thFound: "Найдено", thTime: "Время",
       again: "Ещё раунд", share: "Скопировать ссылку на раунд", copied: "Ссылка скопирована", needName: "Впиши имя — учитель увидит результат.",
-      classLine: (n) => `Раунд класса «${n}»`, notFound: "Раунд не найден.", guest: "Гость",
+      classLine: (n) => `Раунд класса «${n}»`, notFound: "Раунд не найден.", guest: "Гость", genErr: "Не получилось составить раунд. Попробуйте ещё раз через минуту.", tooMany: "Слишком много раундов. Попробуйте позже.",
     },
     kk: {
       tag: "Жаттықтырғыш", navCheck: "Тексеру", navTrainer: "Жаттықтырғыш", navRating: "ЖИ рейтингі", navTeacher: "Мұғалімге",
@@ -119,7 +125,7 @@
       hit: "Таптың!", miss: "Байқамадың", fa: "Бұл дұрыс еді", correct: "Дұрысы:", quote: "Анықтамадан:", sources: "Senim анықтамалары:",
       lbTitle: "Раунд рейтингі", thName: "Аты", thScore: "Ұпай", thFound: "Табылды", thTime: "Уақыт",
       again: "Тағы бір раунд", share: "Раунд сілтемесін көшіру", copied: "Сілтеме көшірілді", needName: "Атыңды жаз — мұғалім нәтижені көреді.",
-      classLine: (n) => `«${n}» сыныбының раунды`, notFound: "Раунд табылмады.", guest: "Қонақ",
+      classLine: (n) => `«${n}» сыныбының раунды`, notFound: "Раунд табылмады.", guest: "Қонақ", genErr: "Раунд құрастырылмады. Бір минуттан кейін қайталап көріңіз.", tooMany: "Раунд тым көп. Кейінірек көріңіз.",
     },
     en: {
       tag: "Trainer", navCheck: "Check", navTrainer: "Trainer", navRating: "AI rating", navTeacher: "Teachers",
@@ -131,7 +137,7 @@
       hit: "Found it!", miss: "Missed", fa: "This one was true", correct: "Correct:", quote: "From the reference:", sources: "Senim references:",
       lbTitle: "Round leaderboard", thName: "Name", thScore: "Score", thFound: "Found", thTime: "Time",
       again: "Another round", share: "Copy round link", copied: "Link copied", needName: "Enter your name so the teacher sees your result.",
-      classLine: (n) => `Class round “${n}”`, notFound: "Round not found.", guest: "Guest",
+      classLine: (n) => `Class round “${n}”`, notFound: "Round not found.", guest: "Guest", genErr: "Couldn't build the round. Try again in a minute.", tooMany: "Too many rounds. Try later.",
     },
   };
   const $ = (id) => document.getElementById(id);
@@ -171,8 +177,9 @@
     try {
       const res = await fetch("/api/trainer/new", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lang: $("gLang").value, topic: $("gTopic").value.trim(), n_errors: Number($("gErr").value) }) });
-      const d = await res.json();
-      if (!res.ok) throw new Error((d.detail && d.detail.message) || d.detail || res.status);
+      const d = await res.json().catch(() => ({}));
+      // текст ошибки сервера не переведён — показываем понятное сообщение на языке интерфейса
+      if (!res.ok) throw new Error(res.status === 429 ? ((d.detail && d.detail.message) || tt("tooMany")) : tt("genErr"));
       await openRound(d.id, true);
     } catch (e) {
       show("loading", false); show("setup", true);

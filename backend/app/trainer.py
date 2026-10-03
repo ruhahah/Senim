@@ -161,9 +161,37 @@ def score_answer(r: dict, marked: list[int], seconds: int) -> dict:
 
 
 def record_result(r: dict, student: str, res: dict, seconds: int) -> None:
-    get_db().execute("INSERT INTO trainer_results VALUES (?,?,?,?,?,?,?,?,?)",
-                     (time.time(), r["id"], r.get("code") or None, classroom.clean_student(student),
-                      res["correct"], res["missed"], res["false_alarms"], int(seconds), res["score"]))
+    marked = [i for i, s in enumerate(res.get("reveal", [])) if s.get("marked")]
+    get_db().execute(
+        "INSERT INTO trainer_results (ts, round_id, code, student, correct, missed, false_alarms, seconds, score, marked) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?)",
+        (time.time(), r["id"], r.get("code") or None, classroom.clean_student(student),
+         res["correct"], res["missed"], res["false_alarms"], int(seconds), res["score"], json.dumps(marked)))
+
+
+def missed_errors(rid: str) -> list[dict]:
+    """Какие спрятанные ошибки ученики класса пропустили — для разбора на уроке.
+    Считаем последнюю попытку каждого ученика."""
+    r = load_round(rid)
+    if not r:
+        return []
+    rows = get_db().execute("SELECT student, marked FROM trainer_results WHERE round_id = ? ORDER BY ts", (rid,))
+    last: dict[str, set[int]] = {}
+    for student, marked in rows:
+        if marked is None:  # результаты до появления колонки — без отметок
+            continue
+        try:
+            last[student] = {int(i) for i in json.loads(marked)}
+        except (TypeError, ValueError):
+            continue
+    out = []
+    for i, s in enumerate(r["sentences"]):
+        if not s.get("false"):
+            continue
+        missed_by = [st for st, m in last.items() if i not in m]
+        out.append({"text": s["text"], "correct": s.get("correct", ""), "missed": len(missed_by),
+                    "of": len(last), "students": missed_by[:10]})
+    return out
 
 
 def leaderboard(rid: str, limit: int = 20) -> list[dict]:
@@ -188,5 +216,5 @@ def class_rounds(code: str) -> list[dict]:
         total = sum(c + m for c, m in res)
         out.append({"id": rid, "created": created, "lang": lang, "topic": topic, "plays": len(res),
                     "found_share": round(found / total, 2) if total else None,
-                    "leaderboard": leaderboard(rid, 5)})
+                    "leaderboard": leaderboard(rid, 5), "errors": missed_errors(rid)})
     return out

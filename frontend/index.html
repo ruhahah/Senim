@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
   <title>Senim — можно ли доверять ответу ИИ?</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%2314532d'/><path d='M30 52l13 13 27-30' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-  <link rel="stylesheet" href="/static/styles.css?v=5">
+  <link rel="stylesheet" href="/static/styles.css?v=7">
 </head>
 <body>
 <header class="topbar">
@@ -114,8 +114,9 @@
     </div>
 
     <div id="progress" class="card progress hidden">
-      <div class="spinner"></div><span id="progressText"></span>
+      <div class="spinner"></div><span id="progressText" aria-live="polite"></span>
       <div class="bar"><div id="progressBar"></div></div>
+      <p id="progressHint" class="small muted hidden" style="grid-column:1 / -1;margin:0"></p>
     </div>
 
     <div id="summaryCard" class="card summary hidden">
@@ -190,7 +191,7 @@
   <div class="foot-links"><button id="btnShowJoin" class="linklike" data-i18n="classJoinLink"></button> · <a href="/teacher" data-i18n="teacherLink"></a> · <a href="/privacy" data-i18n="privacyLink"></a></div>
 </footer>
 
-<script src="/static/i18n.js?v=6"></script>
-<script src="/static/app.js?v=6"></script>
+<script src="/static/i18n.js?v=7"></script>
+<script src="/static/app.js?v=7"></script>
 </body>
 </html>

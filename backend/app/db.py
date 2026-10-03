@@ -37,10 +37,11 @@ TABLES = {
     "tg_members": "chat_id TEXT PRIMARY KEY, code TEXT, student TEXT, ts FLOAT",
     "trainer_rounds": "id TEXT PRIMARY KEY, code TEXT, created FLOAT, lang TEXT, topic TEXT, payload TEXT",
     "trainer_results": """ts FLOAT, round_id TEXT, code TEXT, student TEXT, correct INTEGER, missed INTEGER,
-      false_alarms INTEGER, seconds INTEGER, score INTEGER""",
+      false_alarms INTEGER, seconds INTEGER, score INTEGER, marked TEXT""",
 }
 MIGRATIONS = [
     ("checks", "source_ai", "TEXT"),   # чей ответ проверяли (ChatGPT, Gemini…) — для рейтинга ИИ
+    ("trainer_results", "marked", "TEXT"),  # какие предложения отметил ученик — учитель видит пропущенные ошибки
 ]
 INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_class_checks_code ON class_checks(code)",

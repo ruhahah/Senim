@@ -80,7 +80,17 @@ a { color: var(--blue); }
 }
 .result-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .input-card { align-self: start; position: sticky; top: 76px; }
-@media (max-width: 900px) { .input-card { position: static; } }
+@media (max-width: 900px) {
+  .input-card { position: static; }
+  /* на телефоне кнопка «Проверить» всегда видна — и над экранной клавиатурой */
+  .input-card .actions {
+    position: sticky; bottom: 0; z-index: 5; background: var(--card);
+    margin: 16px -20px 0; padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+  }
+  .input-card .actions .btn-primary { flex: 1 1 100%; min-height: 48px; font-size: 17px; }
+  .input-card .actions .btn:not(.btn-primary) { flex: 1 1 0; min-width: 0; font-size: 13px; padding: 6px 8px; white-space: normal; line-height: 1.25; }
+}
 h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -.01em; }
 h3 { font-size: 16px; margin: 0 0 10px; }
 

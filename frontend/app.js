@@ -108,12 +108,31 @@
     n.className = `notice ${kind}`;
   }
 
+  // таймер ожидания: человек видит, что проверка идёт, а не «зависла»
+  let tick = null, t0 = 0, progressBase = "";
+  function startTicker() {
+    t0 = Date.now();
+    $("progressHint").classList.add("hidden");
+    clearInterval(tick);
+    tick = setInterval(() => {
+      const sec = Math.floor((Date.now() - t0) / 1000);
+      $("progressText").textContent = `${progressBase} · ${sec} ${t("sec")}`;
+      // бесплатный сервер засыпает: если долго нет ни одного вердикта — объясняем, что ждать
+      if (sec >= 10 && state.results.size === 0) { $("progressHint").textContent = t("progress_slow"); $("progressHint").classList.remove("hidden"); }
+    }, 1000);
+  }
+  function stopTicker() { clearInterval(tick); tick = null; }
+
   async function streamFrom(url, body) {
+    if (state.running) return;  // защита от двойного нажатия
     state.running = true;
     setButtons();
     show("emptyState", false);
     show("progress", true);
     setProgress(t("progress_start"), 5);
+    startTicker();
+    // на телефоне результат ниже поля ввода — сразу показываем, что проверка началась
+    if (window.matchMedia("(max-width: 900px)").matches) $("progress").scrollIntoView({ behavior: "smooth", block: "center" });
     try {
       const res = await fetch(url, body ? {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
@@ -141,6 +160,7 @@
     } catch (e) {
       notice(t("err_generic") + e.message, "error");
     } finally {
+      stopTicker();
       state.running = false;
       show("progress", false);
       setButtons();
@@ -193,12 +213,16 @@
   }
 
   function setProgress(text, pct) {
-    $("progressText").textContent = text;
+    progressBase = text;
+    if (state.results.size) $("progressHint").classList.add("hidden");
+    $("progressText").textContent = tick ? `${text} · ${Math.floor((Date.now() - t0) / 1000)} ${t("sec")}` : text;
     $("progressBar").style.width = `${Math.min(100, pct)}%`;
   }
 
   function setButtons() {
     ["btnCheck", "btnCitations", "btnDemo"].forEach((id) => { $(id).disabled = state.running; });
+    $("btnCheck").textContent = state.running ? t("checking") : t("check");
+    $("btnCheck").setAttribute("aria-busy", state.running ? "true" : "false");
   }
 
   // ------------------------------------------------------------ status per sentence
@@ -438,6 +462,7 @@
   function currentText() { return $("answer").value.trim(); }
 
   function startCheck() {
+    if (state.running) return;
     const text = currentText();
     if (text.length < 10) { $("answer").focus(); return; }
     reset();
@@ -456,6 +481,7 @@
   }
 
   async function checkCitationsOnly() {
+    if (state.running) return;
     const text = currentText();
     if (text.length < 5) { $("answer").focus(); return; }
     reset();

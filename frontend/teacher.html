@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Senim — панель учителя</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%2314532d'/><path d='M30 52l13 13 27-30' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-  <link rel="stylesheet" href="/static/styles.css?v=5">
+  <link rel="stylesheet" href="/static/styles.css?v=7">
   <style>
     .t-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
     .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
@@ -27,6 +27,10 @@
     .prob .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
     .warnbox { background: var(--yellow-bg); color: var(--yellow); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
     .band-high { color: var(--green); } .band-medium { color: var(--yellow); } .band-low { color: var(--red); }
+    .miss { font-size: 13px; margin-top: 6px; padding: 6px 10px; border-left: 3px solid var(--red); background: var(--card); border-radius: 0 8px 8px 0; }
+    .miss.ok { border-left-color: var(--green); }
+    .invite-msg { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--green-bg); }
+    .invite-msg p { margin: 0 0 8px; font-size: 14px; white-space: pre-line; }
     @media (max-width: 700px) { .invite { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -71,6 +75,14 @@
           <div id="dCode" class="code-big"></div>
           <div class="copyrow"><span class="small muted" data-t="studentLink"></span><code id="dJoin"></code><button class="btn" data-copy="dJoin" data-t="copy"></button></div>
           <div class="copyrow"><span class="small muted" data-t="botLink"></span><code id="dBot"></code><button class="btn" data-copy="dBot" data-t="copy"></button></div>
+          <div class="invite-msg">
+            <div class="small" style="font-weight:600;margin-bottom:6px" data-t="inviteTitle"></div>
+            <p id="dInvite"></p>
+            <div class="row gap" style="flex-wrap:wrap">
+              <button class="btn btn-primary" data-copy="dInvite" data-t="inviteCopy"></button>
+              <button id="btnShareInvite" class="btn" data-t="inviteShare"></button>
+            </div>
+          </div>
           <div id="keyWarn" class="warnbox hidden" style="margin-top:12px">
             <b data-t="saveTitle"></b> <span data-t="saveText"></span>
             <div class="copyrow"><code id="dDash"></code><button class="btn" data-copy="dDash" data-t="copy"></button></div>
@@ -97,7 +109,7 @@
         <label><span class="field-label" data-t="trErr"></span><select id="trErr" class="btn"><option>1</option><option selected>2</option><option>3</option></select></label>
         <button id="btnTrainer" class="btn btn-primary" data-t="trCreate"></button>
       </div>
-      <div id="trNew" class="copyrow hidden"><span class="small muted" data-t="trLink"></span><code id="trLinkCode"></code><button class="btn" data-copy="trLinkCode" data-t="copy"></button></div>
+      <div id="trNew" class="copyrow hidden"><span class="small muted" data-t="trLink"></span><code id="trLinkCode"></code><button class="btn" data-copy="trLinkCode" data-t="copy"></button><button id="btnShareRound" class="btn" data-t="inviteShare"></button></div>
       <div id="trErrBox" class="notice error hidden"></div>
       <div id="trList" style="margin-top:10px"></div>
     </div>
@@ -148,6 +160,10 @@
       noData: "Пока пусто — дайте ученикам код класса.", notFound: "Класс не найден или неверный ключ в ссылке.",
       disp: "спорных", thIdx: "Индекс", st_contradicted: "опровергнуто", st_disputed: "спорно", times: "раз", fix: "Верно:", nameNeeded: "Введите название класса.",
       found: (e, d) => `ошибок: ${e}, спорных: ${d}`,
+      inviteTitle: "Готовое сообщение для чата класса:", inviteCopy: "Скопировать сообщение", inviteShare: "Отправить…",
+      invite: (link, code) => `Проверяем ответы ИИ в Senim. Регистрация не нужна: откройте ссылку и впишите своё имя.\n${link}\nКод класса: ${code}`,
+      roundInvite: (link) => `Тренажёр «Найди ложь ИИ»: найдите ошибки, которые спрятал ИИ. Впишите своё имя.\n${link}`,
+      trMissed: (n, m) => `пропустили ${n} из ${m}`, trAllFound: "все нашли", trWho: "кто:", genErr: "Не получилось. Попробуйте ещё раз через минуту.", tooMany: "Слишком много запросов. Попробуйте позже.",
     },
     kk: {
       trTitle: "«ЖИ-дің өтірігін тап» жаттықтырғышы", trSub: "Senim сабақ тақырыбы бойынша ЖИ жауабын жазып, оған қателер жасырады. Оқушылар оларды уақытқа іздейді — раундтың өз рейтингі бар.", trTopic: "Сабақ тақырыбы (мысалы, Абылай хан)", trLang: "Тіл", trErr: "Қате саны", trCreate: "Раунд құру", trLink: "Оқушыларға сілтеме:", trWait: "Раунд құрастырылып жатыр…", trPlays: "ойнады", trFound: "қатені тапты", trNone: "Әзірге раунд жоқ.",
@@ -165,6 +181,10 @@
       noData: "Әзірге бос — оқушыларға сынып кодын беріңіз.", notFound: "Сынып табылмады немесе сілтемедегі кілт қате.",
       disp: "даулы", thIdx: "Индекс", st_contradicted: "жоққа шығарылды", st_disputed: "даулы", times: "рет", fix: "Дұрысы:", nameNeeded: "Сынып атауын жазыңыз.",
       found: (e, d) => `қате: ${e}, даулы: ${d}`,
+      inviteTitle: "Сынып чатына дайын хабарлама:", inviteCopy: "Хабарламаны көшіру", inviteShare: "Жіберу…",
+      invite: (link, code) => `Senim-де ЖИ жауаптарын тексереміз. Тіркелу қажет емес: сілтемені ашып, атыңызды жазыңыз.\n${link}\nСынып коды: ${code}`,
+      roundInvite: (link) => `«ЖИ-дің өтірігін тап» жаттықтырғышы: ЖИ жасырған қателерді табыңыз. Атыңызды жазыңыз.\n${link}`,
+      trMissed: (n, m) => `${m} оқушының ${n}-і байқамады`, trAllFound: "бәрі тапты", trWho: "кім:", genErr: "Болмады. Бір минуттан кейін қайталап көріңіз.", tooMany: "Сұрау тым көп. Кейінірек көріңіз.",
     },
     en: {
       trTitle: "“Spot the AI's lie” trainer", trSub: "Senim writes an AI answer on your lesson topic and hides mistakes in it. Students hunt for them against the clock — each round has a leaderboard.", trTopic: "Lesson topic (e.g. Abylai Khan)", trLang: "Language", trErr: "Mistakes", trCreate: "Create round", trLink: "Student link:", trWait: "Building the round…", trPlays: "played", trFound: "of mistakes found", trNone: "No rounds yet.",
@@ -182,6 +202,10 @@
       noData: "Empty so far — give your students the class code.", notFound: "Class not found or wrong key in the link.",
       disp: "disputed", thIdx: "Index", st_contradicted: "refuted", st_disputed: "disputed", times: "times", fix: "Correct:", nameNeeded: "Enter a class name.",
       found: (e, d) => `errors: ${e}, disputed: ${d}`,
+      inviteTitle: "Ready-made message for the class chat:", inviteCopy: "Copy message", inviteShare: "Share…",
+      invite: (link, code) => `We're checking AI answers in Senim. No sign-up: open the link and type your name.\n${link}\nClass code: ${code}`,
+      roundInvite: (link) => `“Spot the AI's lie” trainer: find the mistakes the AI hid. Type your name.\n${link}`,
+      trMissed: (n, m) => `missed by ${n} of ${m}`, trAllFound: "everyone found it", trWho: "who:", genErr: "Something went wrong. Try again in a minute.", tooMany: "Too many requests. Try later.",
     },
   };
   const $ = (id) => document.getElementById(id);
@@ -200,7 +224,7 @@
   }
   function applyT() {
     document.documentElement.lang = lang;
-    document.querySelectorAll("[data-t]").forEach((e) => { e.textContent = tt(e.dataset.t); });
+    document.querySelectorAll("[data-t]").forEach((e) => { const v = tt(e.dataset.t); if (typeof v === "string") e.textContent = v; });
     document.querySelectorAll(".lang-switch button").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
     if (last) render(last);
   }
@@ -210,6 +234,15 @@
   document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
     try { await navigator.clipboard.writeText($(b.dataset.copy).textContent); b.textContent = tt("copied"); setTimeout(() => (b.textContent = tt("copy")), 1500); } catch {}
   }));
+
+  async function share(text, btn) {
+    try {
+      if (navigator.share) { await navigator.share({ text }); return; }
+    } catch { return; }  // пользователь закрыл окно «Поделиться»
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+  }
+  $("btnShareInvite").addEventListener("click", () => share($("dInvite").textContent));
+  $("btnShareRound").addEventListener("click", () => share(tt("roundInvite")($("trLinkCode").textContent)));
 
   function fmtTime(ts) {
     const d = new Date(ts * 1000);
@@ -226,6 +259,7 @@
     $("dBot").textContent = botUser ? `https://t.me/${botUser}?start=class_${d.class.code}` : `/class ${d.class.code}`;
     $("dDash").textContent = `${location.origin}/teacher?code=${d.class.code}&key=${encodeURIComponent(key)}`;
     $("dQr").src = `/api/qr.svg?text=${encodeURIComponent(join)}`;
+    $("dInvite").textContent = tt("invite")(join, d.class.code);
     const k = d.totals;
     $("kChecks").textContent = k.checks;
     $("kStudents").textContent = k.students;
@@ -250,7 +284,10 @@
       el("div", {}, el("b", {}, r.topic), ` · ${r.lang} · ${fmtTime(r.created)} · `,
         el("a", { href: `/trainer?r=${r.id}`, target: "_blank" }, `/trainer?r=${r.id}`)),
       el("div", { class: "meta" }, `${r.plays} ${tt("trPlays")}` + (r.found_share == null ? "" : ` · ${pct(r.found_share)} ${tt("trFound")}`) +
-        (r.leaderboard.length ? " · 🏆 " + r.leaderboard.slice(0, 3).map((x) => `${x.student} ${x.score}`).join(", ") : ""))))
+        (r.leaderboard.length ? " · 🏆 " + r.leaderboard.slice(0, 3).map((x) => `${x.student} ${x.score}`).join(", ") : "")),
+      ...((r.errors || []).filter((e) => e.of > 0).map((e) => el("div", { class: "miss" + (e.missed ? "" : " ok") },
+        el("b", {}, (e.missed ? "✗ " + tt("trMissed")(e.missed, e.of) : "✓ " + tt("trAllFound")) + " — "), `«${e.text}»`,
+        el("div", { class: "meta" }, `${tt("fix")} ${e.correct}` + (e.missed && e.students.length ? ` · ${tt("trWho")} ${e.students.join(", ")}` : "")))))))
       : [el("p", { class: "small muted" }, tt("trNone"))]));
 
     $("recBody").replaceChildren(...(d.recent.length ? d.recent.map((r) => el("tr", {},
@@ -279,8 +316,8 @@
     try {
       const res = await fetch(`/api/class/${encodeURIComponent(code)}/trainer`, { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key, topic: $("trTopic").value.trim(), lang: $("trLang").value, n_errors: Number($("trErr").value) }) });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.detail || res.status);
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(res.status === 429 ? tt("tooMany") : tt("genErr"));
       $("trLinkCode").textContent = location.origin + d.path;
       $("trNew").classList.remove("hidden");
       load();
