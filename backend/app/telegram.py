@@ -17,6 +17,7 @@ import httpx
 from . import classroom, ratelimit, stats
 from .config import get_settings
 from .pipeline.orchestrator import run_check_full
+from . import ocr
 from .pipeline.text_utils import detect_lang
 
 log = logging.getLogger("senim.bot")
@@ -38,6 +39,7 @@ T = {
         "class_help": "Сыныпқа қосылу: /class КОД Атыңыз",
         "in_class": "📚 Сынып: {name}",
         "fb_useful": "Көмектесті ме?", "fb_notice": "Қатені өзіңіз байқар ма едіңіз?", "yes": "Иә", "no": "Жоқ", "thanks": "Рақмет!",
+        "photo_wait": "📷 Суреттегі мәтінді оқып жатырмын…", "photo_none": "Суреттен мәтін табылмады. Анығырақ түсіріп көріңіз немесе мәтінді жіберіңіз.", "photo_fail": "Суретті тану мүмкін болмады. Мәтінді көшіріп жіберіңіз.",
     },
     "ru": {
         "start": "Привет! Я <b>Senim</b> — проверяю ответы ИИ.\n\nПришлите или перешлите мне ответ ChatGPT, Gemini или другого ИИ. Я сверю каждое утверждение с источниками и объясню, почему ему можно или нельзя доверять.",
@@ -54,6 +56,7 @@ T = {
         "class_help": "Войти в класс: /class КОД Имя",
         "in_class": "📚 Класс: {name}",
         "fb_useful": "Помогло?", "fb_notice": "Заметили бы ошибку сами?", "yes": "Да", "no": "Нет", "thanks": "Спасибо!",
+        "photo_wait": "📷 Читаю текст на фото…", "photo_none": "На фото не найден текст. Снимите чётче или пришлите текст.", "photo_fail": "Не удалось распознать фото. Пришлите текст ответа.",
     },
     "en": {
         "start": "Hi! I'm <b>Senim</b> — I check AI answers.\n\nSend or forward me an answer from ChatGPT, Gemini or another AI. I'll check every claim against sources and explain why you can or can't trust it.",
@@ -70,6 +73,7 @@ T = {
         "class_help": "Join a class: /class CODE Name",
         "in_class": "📚 Class: {name}",
         "fb_useful": "Helpful?", "fb_notice": "Would you have noticed?", "yes": "Yes", "no": "No", "thanks": "Thanks!",
+        "photo_wait": "📷 Reading the text in the photo…", "photo_none": "No text found in the photo. Try a sharper shot or send the text.", "photo_fail": "Couldn't read the photo. Please send the text instead.",
     },
 }
 
@@ -140,6 +144,10 @@ class Bot:
     async def handle(self, msg: dict):
         chat = msg["chat"]["id"]
         text = (msg.get("text") or msg.get("caption") or "").strip()
+        if msg.get("photo") and not text.startswith("/"):
+            text = await self._photo_text(msg, chat)
+            if text is None:
+                return
         lang = detect_lang(text) if text and not text.startswith("/") else (
             "kk" if (msg.get("from") or {}).get("language_code") == "kk" else
             "en" if (msg.get("from") or {}).get("language_code") == "en" else "ru")
@@ -198,6 +206,37 @@ class Bot:
         else:
             await self.call("sendMessage", chat_id=chat, text=report, parse_mode="HTML",
                             disable_web_page_preview=True, **extra)
+
+    async def _photo_text(self, msg: dict, chat) -> str | None:
+        """Фото или скриншот ответа ИИ → текст (бета). None — ответ пользователю уже отправлен."""
+        lang = ("kk" if (msg.get("from") or {}).get("language_code") == "kk" else
+                "en" if (msg.get("from") or {}).get("language_code") == "en" else "ru")
+        t = T[lang]
+        if not ratelimit.hit(f"ocr:tg:{chat}", 40):
+            await self.call("sendMessage", chat_id=chat, text=t["photo_fail"])
+            return None
+        note = await self.call("sendMessage", chat_id=chat, text=t["photo_wait"], reply_to_message_id=msg["message_id"])
+        try:
+            best = max(msg["photo"], key=lambda p: p.get("file_size") or 0)  # самое чёткое из размеров
+            f = await self.call("getFile", file_id=best["file_id"])
+            url = self.api.replace("/bot", "/file/bot", 1) + "/" + f["file_path"]
+            r = await self.client.get(url)
+            r.raise_for_status()
+            if len(r.content) > ocr.MAX_BYTES:
+                raise ocr.OCRError("too_big")
+            out = await ocr.extract_text("image/jpeg", r.content)
+        except Exception as e:  # noqa: BLE001
+            log.warning("photo OCR failed: %s", e)
+            out = None
+        if note:
+            await self.call("deleteMessage", chat_id=chat, message_id=note["message_id"])
+        if out is None:
+            await self.call("sendMessage", chat_id=chat, text=t["photo_fail"])
+            return None
+        if len(out["text"]) < 10:
+            await self.call("sendMessage", chat_id=chat, text=t["photo_none"])
+            return None
+        return out["text"]
 
     async def _join(self, chat, t: dict, code: str, name: str):
         cls = None

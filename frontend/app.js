@@ -524,6 +524,70 @@
   $("answer").addEventListener("input", updateCount);
   $("answer").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) startCheck(); });
 
+  // ---------------------------------------------------------- фото / скриншот → текст (бета)
+  function shrinkImage(file, maxSide = 1600) {
+    // уменьшаем на телефоне: быстрее загрузка, дешевле распознавание
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * k);
+        c.height = Math.round(img.naturalHeight * k);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL("image/jpeg", 0.85));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image")); };
+      img.src = url;
+    });
+  }
+  function photoStatus(key, cls = "") {
+    const el = $("photoStatus");
+    el.textContent = t(key);
+    el.className = `small ${cls || "muted"}`;
+  }
+  let photoBusy = false;
+  async function readPhoto(file) {
+    if (!file || photoBusy || state.running) return;
+    if (!file.type.startsWith("image/")) { photoStatus("photoFail", "err"); return; }
+    photoBusy = true;
+    document.querySelector(".btn-photo").classList.add("busy");
+    photoStatus("photoReading");
+    try {
+      const image = await shrinkImage(file);
+      const res = await fetch("/api/ocr", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const code = data.detail && data.detail.code;
+        photoStatus(code === "no_text" ? "photoNoText" : code === "too_big" ? "photoTooBig"
+          : res.status === 429 ? "photoLimit" : "photoFail", "err");
+        return;
+      }
+      $("answer").value = data.text.slice(0, 12000);
+      if (data.question && !$("question").value.trim()) $("question").value = data.question;
+      updateCount();
+      photoStatus("photoDone", "ok");
+      // ученик сначала видит распознанный текст — ошибку распознавания не выдадим за ошибку ИИ
+      $("answer").scrollIntoView({ behavior: "smooth", block: "center" });
+    } catch {
+      photoStatus("photoFail", "err");
+    } finally {
+      photoBusy = false;
+      document.querySelector(".btn-photo").classList.remove("busy");
+      $("photoInput").value = "";
+    }
+  }
+  $("photoInput").addEventListener("change", (e) => readPhoto(e.target.files[0]));
+  // на компьютере скриншот можно просто вставить в поле ответа (Ctrl+V)
+  $("answer").addEventListener("paste", (e) => {
+    const item = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith("image/"));
+    if (item) { e.preventDefault(); readPhoto(item.getAsFile()); }
+  });
+
   // ---------------------------------------------------------- feedback (мини-опрос)
   function resetFeedback() {
     document.querySelectorAll(".fb-btns").forEach((g) => {

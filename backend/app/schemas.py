@@ -132,6 +132,10 @@ class CheckRequest(BaseModel):
     source_ai: str = Field("", max_length=20)    # чей это ответ: chatgpt, gemini… (для рейтинга ИИ)
 
 
+class OCRRequest(BaseModel):
+    image: str = Field(..., min_length=100, max_length=7_000_000)  # data:image/jpeg;base64,…
+
+
 class CitationsRequest(BaseModel):
     text: str = Field(..., min_length=5, max_length=12000)
 

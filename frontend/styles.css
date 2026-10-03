@@ -272,3 +272,11 @@ a.chip { text-decoration: none; }
 .source-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .source-row select { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: inherit; }
 @media (max-width: 720px) { .nav a { padding: 4px 6px; } }
+
+/* фото / скриншот ответа ИИ */
+.photo-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.btn-photo { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn-photo.busy { opacity: .6; pointer-events: none; }
+.beta { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 7px; border-radius: 99px; background: var(--yellow-bg); color: var(--yellow); }
+#photoStatus.ok { color: var(--green); }
+#photoStatus.err { color: var(--red); }

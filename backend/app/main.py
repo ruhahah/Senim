@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import cache, classroom, ratelimit, stats, trainer
+from . import cache, classroom, ocr, ratelimit, stats, trainer
 from . import telegram as tg
 from .config import ROOT_DIR, get_settings
 from .llm import get_router
@@ -21,7 +21,7 @@ from .pipeline import nli
 from .pipeline.orchestrator import run_check, run_check_full
 from .pipeline.search import http_client
 from .pipeline.text_utils import split_sentences
-from .schemas import (CheckRequest, CitationsRequest, ClassCreateRequest, FeedbackRequest,
+from .schemas import (CheckRequest, CitationsRequest, OCRRequest, ClassCreateRequest, FeedbackRequest,
                       ThinkResultRequest, TrainerAnswerRequest, TrainerClassRequest, TrainerNewRequest)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -332,6 +332,25 @@ async def privacy_page():
 @app.get("/teacher")
 async def teacher_page():
     return FileResponse(FRONTEND / "teacher.html")
+
+
+@app.post("/api/ocr")
+async def ocr_image(req: OCRRequest, request: Request):
+    """Фото или скриншот ответа ИИ → текст. Проверку ученик запускает сам, увидев распознанный текст."""
+    key = ratelimit.client_key(request)
+    if not ratelimit.is_local(key) and not ratelimit.hit("ocr:" + key, 40):
+        raise HTTPException(429, {"code": "rate_limit", "message": "too many photos"})
+    try:
+        mime, raw = ocr.decode_image(req.image)
+        if not get_router().available:
+            raise ocr.OCRError("llm_not_configured")
+        out = await ocr.extract_text(mime, raw)
+    except ocr.OCRError as e:
+        status = {"too_big": 413, "llm_failed": 503, "llm_not_configured": 503}.get(e.code, 400)
+        raise HTTPException(status, {"code": e.code, "message": str(e)[:200]})
+    if not out["text"]:
+        raise HTTPException(422, {"code": "no_text", "message": "no readable text"})
+    return out
 
 
 @app.post("/api/citations")

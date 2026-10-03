@@ -291,15 +291,21 @@ class LLMRouter:
     def label(self) -> str:
         return " → ".join(f"{p.name}:{p.model}" for p in self.providers) or "не настроен"
 
-    async def complete_json(self, system: str, user: str, *, cache_ns: str = "llm") -> Any:
+    async def complete_json(self, system: str, user: str | list, *, cache_ns: str = "llm",
+                            only: Optional[tuple[str, ...]] = None) -> Any:
+        """user — строка или список частей (текст + картинка) для моделей, которые видят изображения.
+        only — ограничить провайдеров (например, только те, что умеют читать фото)."""
         if not self.providers:
             raise LLMNotConfigured(
                 "ИИ-провайдер не настроен: заполните LLM_PROVIDER и ключ в файле .env"
             )
+        pool = [p for p in self.providers if not only or p.name in only]
+        if not pool:
+            raise LLMNotConfigured("Нет провайдера, который умеет читать изображения (нужен OpenAI или Gemini)")
         last_err: Optional[Exception] = None
         for rnd in range(self.MAX_ROUNDS):
             waits: list[float] = []
-            for p in self._order():
+            for p in [p for p in self._order() if p in pool]:
                 key = cache.make_key(cache_ns, [p.name, p.model, system, user])
                 hit = cache.get(key)
                 if hit is not None:
@@ -308,9 +314,13 @@ class LLMRouter:
                 for attempt in range(2):
                     try:
                         async with self._sem(p):
-                            prompt = user if attempt == 0 else (
-                                user + "\n\nВАЖНО: верни ТОЛЬКО корректный JSON без пояснений."
-                            )
+                            retry_note = "\n\nВАЖНО: верни ТОЛЬКО корректный JSON без пояснений."
+                            if attempt == 0:
+                                prompt = user
+                            elif isinstance(user, list):
+                                prompt = user + [{"type": "text", "text": retry_note.strip()}]
+                            else:
+                                prompt = user + retry_note
                             text = await p.complete(system, prompt, json_mode=True)
                         data = parse_json(text)
                         cache.put(key, data)
@@ -333,7 +343,7 @@ class LLMRouter:
                         last_err = e
                         log.warning("%s (попытка %d)", _short(e), attempt + 1)
             # все провайдеры временно заняты (лимит в минуту) — ждём и пробуем ещё раз
-            if rnd + 1 < self.MAX_ROUNDS and waits and len(waits) == len(self.providers):
+            if rnd + 1 < self.MAX_ROUNDS and waits and len(waits) == len(pool):
                 delay = min(30.0, max(max(waits), 5.0 * (rnd + 1)))
                 log.warning("Все провайдеры заняты — жду %.0f с и повторяю", delay)
                 await asyncio.sleep(delay)
